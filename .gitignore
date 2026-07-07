@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Claude 本地指引，不入库（仅供 Claude Code / Cowork 使用）
+CLAUDE.md
+
+# demo 运行产物（相机抓帧等），非仓库资产
+atom/assets/camera_captures/
