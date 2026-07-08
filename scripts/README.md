@@ -9,6 +9,7 @@ When adding a script, register a row below with its purpose and which machine / 
 | Script | Purpose | Where to run |
 |---|---|---|
 | `start_body_control.sh` | One-click start of body_control (wraps the manual steps in *Prerequisite · Environment Setup* §2) | robot x86, user ubuntu |
+| `start_camera.sh` | One-click start of the Orbbec camera driver (prerequisite for perception atoms, e.g. atom25) | robot Orin, user nvidia |
 
 ## start_body_control.sh — one-click startup (quick path)
 
@@ -24,3 +25,17 @@ chmod +x scripts/start_body_control.sh   # make executable, first time only
 - If body is already running it just attaches (no double-start); if tmux is missing it tells you how to install it.
 
 ⚠ Manual start and the remote's A-button auto-start are mutually exclusive — don't use both.
+
+## start_camera.sh — one-click camera startup
+
+Starts the Orbbec camera driver (Gemini 330 series). Unlike body_control, the camera runs on the **Orin** (not x86) and needs **no root and no body_control**.
+
+```bash
+chmod +x scripts/start_camera.sh    # make executable, first time only
+./scripts/start_camera.sh           # on the robot's Orin, as user nvidia
+```
+
+- Creates the `cam` tmux session, sources the Orbbec workspace, runs `ros2 launch orbbec_camera gemini_330_series.launch.py`, then drops you into the session.
+- Success = camera topics start publishing; verify in another terminal with `ros2 topic list | grep camera`.
+- Detach with `Ctrl+B` then `D`; if it's already running it just attaches; if it can't find the driver workspace, set `ORBBEC_WS` at the top of the script.
+- The atom25 camera demo can then run on the Orin locally, or on the x86 (same ROS graph, matching `ROS_DOMAIN_ID`).

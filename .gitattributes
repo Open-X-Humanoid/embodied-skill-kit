@@ -1,0 +1,26 @@
+# 统一行尾：所有文本文件在仓库里一律存 LF，签出时也用 LF
+# git 自动识别文本/二进制，文本文件强制 LF，杜绝 Windows 下 CRLF 噪声
+* text=auto eol=lf
+
+# 明确常见文本类型（保险起见，覆盖 text=auto 的误判）
+*.py    text eol=lf
+*.md    text eol=lf
+*.txt   text eol=lf
+*.yaml  text eol=lf
+*.yml   text eol=lf
+*.json  text eol=lf
+*.cfg   text eol=lf
+*.sh    text eol=lf
+*.urdf  text eol=lf
+*.xml   text eol=lf
+
+# 二进制资产：禁止任何行尾/编码转换
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.pdf   binary
+*.mp4   binary
+*.bag   binary
+*.pyc   binary
+*.zip   binary

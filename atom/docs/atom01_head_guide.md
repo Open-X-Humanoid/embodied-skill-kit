@@ -150,7 +150,7 @@ Predict first, then run, and check against your prediction.
 | Head doesn't move, no error | no subscriber on `/head/cmd_pos` (body_control not up): `ros2 topic list \| grep head` to confirm the topic exists |
 | `cur_pos` prints empty | no status received: confirm body_control is up and `/head/status` has data (`ros2 topic hz /head/status`) |
 | `import bodyctrl_msgs` fails | not sourced: `source /home/ubuntu/ros2ws/install/setup.bash` (every new terminal) |
-| Head jumps suddenly | blindly sending an absolute angle at startup jumps from the current position; read the current angle first, then step in small increments |
+
 
 ## 6. Going Further
 

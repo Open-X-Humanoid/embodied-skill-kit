@@ -149,7 +149,6 @@ STATUS_TOPIC = "/arm/status"        # 2) 换状态话题
 | 头不动、也不报错 | `/head/cmd_pos` 没订阅者（body_control 没起）：`ros2 topic list \| grep head` 确认话题在 |
 | `cur_pos` 打印为空 | 没收到 status：确认 body_control 已起、`/head/status` 有数据（`ros2 topic hz /head/status`） |
 | `import bodyctrl_msgs` 报错 | 没 source：`source /home/ubuntu/ros2ws/install/setup.bash`（每个新终端都要） |
-| 头猛地跳一下 | 开机盲发绝对角，从当前位置直接跳到目标；要平滑就先读当前角再小步增量 |
 
 ## 6. 进阶
 

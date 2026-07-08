@@ -3,7 +3,7 @@
 **English** | [简体中文](environment_setup_zh-CN.md)
 
 > Common prerequisite for every atom example: network connectivity → **start the node(s) the atom needs** → prepare a dev terminal. Most atoms start body_control; perception atoms (e.g. the camera) start their own driver — see "Other nodes" at the end of §2.
-> The full version (two startup modes, the proc_manager relationship, the 8080 dashboard) is in the internal doc *手动启动 BODY 简明指南.md*.
+
 
 ## 1. Network Connectivity
 
