@@ -10,11 +10,11 @@ Content grows through five stages — the names keep a "build up from the smalle
 
 | Stage | In one line | Question it answers | Status |
 |---|---|---|---|
-| ① Atom | Make a single body part move | How do you move one part? Control interface, units, limits | ✅ In progress |
-| ② Molecule | Coordinate parts into one motion | How do multiple parts coordinate? | 🚧 Planned |
-| ③ Skill | Turn motion into a reliable task that reports success/failure | How does motion become reliable & report status? | 🚧 Planned |
-| ④ Scene | Orchestrate skills into a full job | How are skills orchestrated into a job? | 🚧 Planned |
-| ⑤ Evolution | Reshape the underlying capability (models / force control / IK) | How do you change the low-level capability? | 🚧 Planned |
+| ①&nbsp;Atom | Make a single body part move | How do you move one part? Control interface, units, limits | ✅ In progress |
+| ②&nbsp;Molecule | Coordinate parts into one motion | How do multiple parts coordinate? | 🚧 Planned |
+| ③&nbsp;Skill | Turn motion into a reliable task that reports success/failure | How does motion become reliable & report status? | 🚧 Planned |
+| ④&nbsp;Scene | Orchestrate skills into a full job | How are skills orchestrated into a job? | 🚧 Planned |
+| ⑤&nbsp;Evolution | Reshape the underlying capability (models / force control / IK) | How do you change the low-level capability? | 🚧 Planned |
 
 Each stage directory splits into `demos/` (example code) and `docs/` (guides); **see the corresponding directory for the concrete list**.
 
