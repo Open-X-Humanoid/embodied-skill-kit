@@ -31,7 +31,7 @@ FINGER_NAMES = ["1", "2", "3", "4", "5", "6"]        # 小指 无名指 中指 �
 class HandDemo(Node):
     def __init__(self):
         super().__init__("atom_hand_demo")
-        self.pub = self.create_publisher(JointState, HAND_CMD_TOPIC, 1)
+        self.pub = self.create_publisher(JointState, HAND_CMD_TOPIC, 10)
 
         # —— 读取当前状态 —— 订阅状态话题，回调里把 6 个手指的当前张合百分比存起来
         self.cur_pos = None   # list[float]：6 个手指当前张合(0~1)；None=还没收到

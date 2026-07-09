@@ -2,7 +2,7 @@
 
 **English** | [简体中文](environment_setup_zh-CN.md)
 
-> Common prerequisite for every atom example: network connectivity → **start the node(s) the atom needs** → prepare a dev terminal. Most atoms start body_control; perception atoms (e.g. the camera) start their own driver — see "Other nodes" at the end of §2.
+> Common prerequisite for every atom example: network connectivity → **start the node(s) the atom needs** → prepare a dev terminal. Most atoms start body_control; perception/voice atoms (e.g. camera, voice) start their own node — see "Other nodes" at the end of §2.
 
 
 ## 1. Network Connectivity
@@ -32,7 +32,7 @@ Log in:
 ssh ubuntu@<robot-IP>
 ```
 
-## 2. Start body_control (needed by most atoms)
+## 2. Start body_control (needed by most atoms; runs on the x86)
 
 **Quick path**: just run the one-click script `./scripts/start_body_control.sh` (it wraps all the manual steps in this section). Follow the manual steps below when you want to understand each one — they're equivalent.
 
@@ -61,7 +61,12 @@ Loaded node '/bodyctrl_component' in container '/body_container'
 | List sessions | `tmux ls` |
 | Stop body | attach, then `Ctrl + C` |
 
-**Other nodes**: not every atom uses body_control. Perception atoms start their own driver, possibly on a **different board** — e.g. the **camera (atom25)** runs `ros2 launch orbbec_camera gemini_330_series.launch.py` on the **Orin**, and does **not** need body_control. Which nodes an atom needs, and on which board, is specified in that atom's guide under "Run it."
+**Other nodes**: not every atom uses body_control. Perception/voice atoms start their own node, possibly on a **different board**, and none need body_control:
+
+- **Camera (atom25)**: on the **Orin**, `bash scripts/start_camera.sh` (one-click; equivalent to `ros2 launch orbbec_camera gemini_330_series.launch.py`).
+- **Voice (atom26/27)**: on the **Orin**, `bash scripts/start_voice.sh` (lyre chat mode — TTS/playback; usually auto-started at boot).
+
+Which nodes an atom needs, on which board, and the voice mode/prerequisite details are specified in that atom's guide under "Run it."
 
 ## 3. Prepare a Dev Terminal
 

@@ -2,7 +2,7 @@
 
 [English](environment_setup.md) | **简体中文**
 
-> 所有原子示例的共同前置：网络连通 → 启动**该原子需要的节点** → 准备开发终端。多数原子起 body_control；感知类（如相机）起对应驱动节点，见第 2 节末尾「其它节点」。
+> 所有原子示例的共同前置：网络连通 → 启动**该原子需要的节点** → 准备开发终端。多数原子起 body_control；感知/语音类（如相机、语音）起对应节点，见第 2 节末尾「其它节点」。
 
 
 ## 1. 网络连通
@@ -32,7 +32,7 @@ Windows 端连不通的排查顺序：
 ssh ubuntu@<机器人IP>
 ```
 
-## 2. 启动 body_control（多数原子的前置）
+## 2. 启动 body_control（多数原子的前置，跑在 x86）
 
 **快速版**：直接跑一键脚本 `./scripts/start_body_control.sh`（封装了本节全部手动步骤）。想理解每步在做什么就照下面手动来——两者等价。
 
@@ -61,7 +61,12 @@ Loaded node '/bodyctrl_component' in container '/body_container'
 | 查看会话列表 | `tmux ls` |
 | 停止 body | attach 进去后 `Ctrl + C` |
 
-**其它节点**：不是所有原子都用 body_control。感知类原子要另起对应驱动，且可能在**另一块板子**上——例如**相机（atom25）**在 **Orin** 上执行 `ros2 launch orbbec_camera gemini_330_series.launch.py`，且**不需要 body_control**。每个原子该起哪些节点、在哪块板子，以该原子 guide 的「怎么跑」为准。
+**其它节点**：不是所有原子都用 body_control。感知/语音类原子要另起对应节点，且可能在**另一块板子**上，都**不需要 body_control**：
+
+- **相机（atom25）**：在 **Orin** 上 `bash scripts/start_camera.sh`（一键；等价 `ros2 launch orbbec_camera gemini_330_series.launch.py`）。
+- **语音（atom26/27）**：在 **Orin** 上 `bash scripts/start_voice.sh`（lyre chat 模式，含朗读/播放；出厂通常已自启）。
+
+每个原子该起哪些节点、在哪块板子、语音模式与前置细节，以该原子 guide 的「怎么跑」为准。
 
 ## 3. 开发终端准备
 

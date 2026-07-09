@@ -33,7 +33,7 @@ MAX_CUR = [1.0, 1.0, 1.0]  # 三个关节最大电流(A)
 class HeadDemo(Node):
     def __init__(self):
         super().__init__("atom_head_demo")
-        self.pub = self.create_publisher(CmdSetMotorPosition, HEAD_CMD_TOPIC, 1)
+        self.pub = self.create_publisher(CmdSetMotorPosition, HEAD_CMD_TOPIC, 10)
 
         # —— 读取当前角度 —— 订阅状态话题，回调里把每个电机的当前角存进 cur_pos
         self.cur_pos = {}   # {电机ID: 当前角度(rad)}

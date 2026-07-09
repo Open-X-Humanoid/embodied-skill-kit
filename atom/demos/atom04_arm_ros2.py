@@ -36,7 +36,7 @@ MAX_CUR = 1.0        # A
 class ArmDemo(Node):
     def __init__(self):
         super().__init__("atom_arm_demo")
-        self.pub = self.create_publisher(CmdSetMotorPosition, ARM_CMD_TOPIC, 1)
+        self.pub = self.create_publisher(CmdSetMotorPosition, ARM_CMD_TOPIC, 10)
         self.cur_pos = {}  # {motor_id: pos}
         self.status_sub_ = self.create_subscription(MotorStatusMsg, ARM_STATUS_TOPIC, self._on_status, 1)
         self.get_logger().info(f"手臂原子 demo 已启动，发布到 {ARM_CMD_TOPIC}")

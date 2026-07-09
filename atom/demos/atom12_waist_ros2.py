@@ -38,7 +38,7 @@ YAW_AMP = 0.2            # rad，左右各转这么多
 class WaistDemo(Node):
     def __init__(self):
         super().__init__("atom_waist_demo")
-        self.pub = self.create_publisher(CmdSetMotorPosition, WAIST_CMD_TOPIC, 1)
+        self.pub = self.create_publisher(CmdSetMotorPosition, WAIST_CMD_TOPIC, 10)
         self.cur_pos = {}
         self.status_sub_ = self.create_subscription(MotorStatusMsg, WAIST_STATUS_TOPIC, self._on_status, 1)
         self.get_logger().info(f"腰部原子 demo 已启动，发布到 {WAIST_CMD_TOPIC}")
