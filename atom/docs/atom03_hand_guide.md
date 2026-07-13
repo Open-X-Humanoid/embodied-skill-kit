@@ -1,12 +1,12 @@
-# Atom 8 · Hand · Five-Finger Open/Close Control
+# Atom 3 · Hand · Five-Finger Open/Close Control
 
-**English** | [简体中文](atom08_hand_guide_zh-CN.md)
+**English** | [简体中文](atom03_hand_guide_zh-CN.md)
 
 **In one line**: publish a `JointState` (the six fingers' open ratios, 0–1) to `/inspire_hand/ctrl/left_hand` to open/close the dexterous hand; subscribe to `/inspire_hand/state/left_hand` to read the current opening back.
 
 | Companion code | Demo video |
 |---|---|
-| `atom/demos/atom08_hand_ros2.py` (native ROS2), `atom/demos/atom08_hand_ros2_robust.py` (production) | in `atom/assets/videos/`, same name as the code — watch 30s first |
+| `atom/demos/atom03_hand_ros2.py` (native ROS2), `atom/demos/atom03_hand_ros2_robust.py` (production) | in `atom/assets/videos/`, same name as the code — watch 30s first |
 
 ## 1. At a Glance (read this first)
 
@@ -17,7 +17,7 @@ Prerequisite: body_control is up (the dexterous hand comes with the body driver)
 ```bash
 ssh ubuntu@<robot-IP>
 source /home/ubuntu/ros2ws/install/setup.bash   # run in every new terminal
-python3 atom/demos/atom08_hand_ros2.py
+python3 atom/demos/atom03_hand_ros2.py
 ```
 
 Expected: prints the current opening → fully open → fist (0.1) → open again → bend only the index finger → open to finish.
@@ -87,7 +87,7 @@ See 1.3. The plain version does no checking (sends whatever you give); the robus
 
 ## 3. Code Walkthrough (core)
 
-`atom08_hand_ros2.py` is **5 modules**. It's the same "send command + read state" skeleton as head/arm; the difference is the **message type is `JointState` and the value is an open ratio**.
+`atom03_hand_ros2.py` is **5 modules**. It's the same "send command + read state" skeleton as head/arm; the difference is the **message type is `JointState` and the value is an open ratio**.
 
 ### 3.1 Module map
 
@@ -139,5 +139,5 @@ Predict first, then run, and check against your prediction.
 
 ## 6. Going Further
 
-- **Production hardening**: wait-for-subscriber-ready, refuse on status timeout, explicit validation (instead of `assert`, which is skipped under `-O`), clamp to `[0,1]`, warn on wrong state length, `spin_once` (non-negative timeout) — see `atom/demos/atom08_hand_ros2_robust.py`.
+- **Production hardening**: wait-for-subscriber-ready, refuse on status timeout, explicit validation (instead of `assert`, which is skipped under `-O`), clamp to `[0,1]`, warn on wrong state length, `spin_once` (non-negative timeout) — see `atom/demos/atom03_hand_ros2_robust.py`.
 - **Finer control**: the Inspire hand also has a **service interface** for **torque / speed** (this atom only uses the simplest topic open/close control). Under an xRocs/xArm wrapper the topic/service names may differ.

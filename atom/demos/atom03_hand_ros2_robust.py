@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-原子示例 · 原8 · 灵巧手（Hand，因时 Inspire 五指） —— ROS2 原生版 [生产级]
-让灵巧手张开、握拳，并读取手指当前状态。   配套讲解: atom/docs/atom08_hand_guide.md
+原子示例 · 原3 · 灵巧手（Hand，因时 Inspire 五指） —— ROS2 原生版 [生产级]
+让灵巧手张开、握拳，并读取手指当前状态。   配套讲解: atom/docs/atom03_hand_guide.md
 
 接口（topic 控制）:
   话题: /inspire_hand/ctrl/left_hand   （右手: /inspire_hand/ctrl/right_hand）

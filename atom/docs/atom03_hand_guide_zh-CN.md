@@ -1,12 +1,12 @@
-# 原8 · 灵巧手（Hand）· 五指张合控制
+# 原3 · 灵巧手（Hand）· 五指张合控制
 
-[English](atom08_hand_guide.md) | **简体中文**
+[English](atom03_hand_guide.md) | **简体中文**
 
 **一句话**：向话题 `/inspire_hand/ctrl/left_hand` 发一条 `JointState`（6 个手指的张合百分比 0~1）让灵巧手张开/握拳，订阅 `/inspire_hand/state/left_hand` 读回当前张合。
 
 | 配套代码 | 演示视频 |
 |---|---|
-| `atom/demos/atom08_hand_ros2.py`（ROS2 原生版）、`atom/demos/atom08_hand_ros2_robust.py`（生产版） | `atom/assets/videos/` 下与配套代码同名，建议先看 30 秒 |
+| `atom/demos/atom03_hand_ros2.py`（ROS2 原生版）、`atom/demos/atom03_hand_ros2_robust.py`（生产版） | `atom/assets/videos/` 下与配套代码同名，建议先看 30 秒 |
 
 ## 1. 速览（点进来先看这块）
 
@@ -17,7 +17,7 @@
 ```bash
 ssh ubuntu@<机器人IP>
 source /home/ubuntu/ros2ws/install/setup.bash   # 每个新终端都要执行
-python3 atom/demos/atom08_hand_ros2.py
+python3 atom/demos/atom03_hand_ros2.py
 ```
 
 预期现象：打印当前手指张合 → 完全张开 → 握拳(0.1) → 再张开 → 只弯食指 → 收尾张开。
@@ -87,7 +87,7 @@ def _on_state(self, msg):
 
 ## 3. 代码解读（核心）
 
-`atom08_hand_ros2.py` 全文 = **5 个模块**。和头/臂是同一套「发指令 + 读状态」骨架，区别在**消息类型是 `JointState`、值是张合百分比**。
+`atom03_hand_ros2.py` 全文 = **5 个模块**。和头/臂是同一套「发指令 + 读状态」骨架，区别在**消息类型是 `JointState`、值是张合百分比**。
 
 ### 3.1 模块地图
 
@@ -139,5 +139,5 @@ HAND_CMD_TOPIC = "/inspire_hand/ctrl/right_hand"   # 换右手
 
 ## 6. 进阶
 
-- **生产级加固**：等订阅就绪、状态超时拒动、显式校验（替代 `assert`，`-O` 下不失效）、值域夹到 `[0,1]`、状态长度不符告警、`spin_once` 非负 timeout——见 `atom/demos/atom08_hand_ros2_robust.py`。
+- **生产级加固**：等订阅就绪、状态超时拒动、显式校验（替代 `assert`，`-O` 下不失效）、值域夹到 `[0,1]`、状态长度不符告警、`spin_once` 非负 timeout——见 `atom/demos/atom03_hand_ros2_robust.py`。
 - **更细的控制**：因时手另有 **service 接口**可设**力矩 / 速度**（本原子只用最简单的 topic 张合控制）。走 xRocs 等封装时话题/服务名可能不同，另见对应变体。

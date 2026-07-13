@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-原子示例 · 原8 · 灵巧手（Hand，因时 Inspire 五指） —— ROS2 原生版
-让灵巧手张开、握拳，并演示如何读取手指当前状态。   配套讲解: atom/docs/atom08_hand_guide.md
+原子示例 · 原3 · 灵巧手（Hand，因时 Inspire 五指） —— ROS2 原生版
+让灵巧手张开、握拳，并演示如何读取手指当前状态。   配套讲解: atom/docs/atom03_hand_guide.md
 
 【版本说明】本文件是 ROS2 原生实现（topic 控制）。因时灵巧手另有 service 接口可设力矩/速度
   （见 SDK）；若走 xRocs 等封装，话题/服务名可能不同，届时另见对应变体。
