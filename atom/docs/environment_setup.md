@@ -88,5 +88,6 @@ python3 -c "import bodyctrl_msgs"                     # no error = the message p
 
 - **Empty topic list**: body isn't up, or the current terminal didn't source the workspace.
 - **`import bodyctrl_msgs` fails**: didn't source `/home/ubuntu/ros2ws/install/setup.bash`.
-- **Want the whole-robot status**: open `http://<robot-IP>:8080/` in a browser for the diagnostics dashboard (starting the dashboard is covered in the full guide).
-- **User roles**: root is only for starting body; day-to-day dev, running demos, and checking topics all use the ubuntu user.
+- **Want the whole-robot status**: open `http://<robot-IP>:8080/` in a browser for the diagnostics dashboard.
+- **Joints report `DisableMotor` failures after starting body (arm/head/waist/leg, etc.)**: most likely the **E-stop is pressed** — the body motor drivers can't enable. Release the E-stop and restart; if it still fails, check in order: remote-control mutual exclusion, full power-cycle to clear faults, motor power supply, EtherCAT/CAN bus.
+- **tmux doesn't auto-exit after `All devices ready.`**: this is **normal success**, not a hang — body_control is a long-running service and the script deliberately attaches you into the session to show logs. Press `Ctrl+B` then `D` to detach and leave it running in the background, then run your demo from another terminal.

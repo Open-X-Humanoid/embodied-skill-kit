@@ -11,6 +11,8 @@
 | `start_body_control.sh` | 一键启动 body_control（封装《前置 · 环境配置》第 2 节手动步骤） | 机器人 x86，ubuntu 用户 |
 | `start_camera.sh` | 一键启动 Orbbec 相机驱动（感知类原子如 atom25 的前置） | 机器人 Orin，nvidia 用户 |
 | `start_voice.sh` | 一键启动 lyre 语音（chat 模式，语音原子 atom26~29 的前置） | 机器人 Orin，nvidia 用户 |
+| `start_xarm.sh` | 一键启动 XARM 框架 + MoveIt 组件（手臂 MoveIt 原子 atom05 的前置） | 机器人 x86，ubuntu 用户 |
+| `stop_all.sh` | 一键清场：停掉本仓库脚本启动的会话/进程（"系统乱了"时重来） | 对应板子（body/xarm 在 x86，camera/voice 在 Orin） |
 
 ## start_body_control.sh —— 一键启动（快速版）
 
@@ -54,3 +56,30 @@ chmod +x scripts/start_voice.sh   # 首次赋可执行权限（只需一次）
 - 语音服务/话题起来即成功：`ros2 service list | grep audio_play`、`ros2 topic list | grep audio`。
 - **出厂通常已默认启动**——脚本会先检测 lyre 是否在跑，避免重复；已在跑则直接提示退出。
 - 若 workspace 路径不同，改脚本顶部 `ROS2WS`。
+
+## start_xarm.sh —— 一键启动 XARM + MoveIt（快速版）
+
+启动 XARM 框架本体 + MoveIt 组件（tmux 两窗格），是手臂 MoveIt 原子（atom05）的前置。⚠ 命令取自知识库《天轶2.0 XARM启动》，**尚未真机核实**。
+
+```bash
+chmod +x scripts/start_xarm.sh
+bash scripts/start_xarm.sh sim     # 仿真模式（带 RViz，不需真机/body_control，推荐先用它验证）
+bash scripts/start_xarm.sh real    # 真机模式（前提：先在 x86 起 body_control）
+source scripts/start_xarm.sh       # 只给【当前终端】source XARM 环境（跑 atom05 用）
+```
+
+- `bash` 模式建 `xarm` tmux 会话：窗格0 起 XARM 本体、窗格1 延时后起 MoveIt 组件，并带你进会话。
+- ★ XARM 有**自己的 install**（`/home/ubuntu/XARM/install`，含 `moveit_msgs`/`tianyi2_bringup`），**不是 ros2ws**——跑 atom05 的终端要 source 这个。
+- 验证：`ros2 control list_controllers`（含 `moveit_*_arm_controller`）、`ros2 action list | grep move_action`。
+- 若 XARM 路径不同，改脚本顶部 `XARM_WS`。
+
+## stop_all.sh —— 一键清场（乱了就用它重来）
+
+停掉本仓库脚本起的所有会话/进程（`xarm`/`body`/`cam`/`voice` tmux + 对应 launch + body_control），用于反复启动、顺序搞乱、body_control 起不来时**清干净重来**。
+
+```bash
+bash scripts/stop_all.sh    # 在对应板子上跑；body_control 是 root 起的，杀它会用 sudo（可能要密码）
+```
+
+- 之后按正确顺序重启：**先 body_control，再 XARM/MoveIt**（见下方「完整流程」或 atom05 guide）。
+- ⚠ 命令按常规写，进程名/路径以你机器人为准。

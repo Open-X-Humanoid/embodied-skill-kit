@@ -88,5 +88,6 @@ python3 -c "import bodyctrl_msgs"                     # 不报错 = 消息包可
 
 - **topic 列表为空**：body 没起来，或当前终端没 source 工作空间。
 - **`import bodyctrl_msgs` 报错**：没 source `/home/ubuntu/ros2ws/install/setup.bash`。
-- **想看整机状态**：浏览器打开 `http://<机器人IP>:8080/` 诊断看板（保留看板的启动方式见完整版指南）。
-- **用户分工**：root 只用来启动 body；日常开发、跑 demo、查 topic 都用 ubuntu 用户。
+- **想看整机状态**：浏览器打开 `http://<机器人IP>:8080/` 诊断看板
+- **启动 body 后有关节报 `DisableMotor` 失败（手臂/头/腰/腿等）**：多半是**急停被按下**——身体电机驱动器无法使能。先松开急停、重启；若仍失败，依次查：遥控器互斥、整机断电清错、动力电源、EtherCAT/CAN 总线。
+- **看到 `All devices ready.` 后 tmux 没有自动退出**：这是**正常成功**，不是卡住——body_control 是持续运行的服务，脚本故意 attach 进会话让你看日志。按 `Ctrl+B` 再按 `D` 脱离，让它后台继续跑，另开终端跑 demo。

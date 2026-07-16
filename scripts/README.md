@@ -11,6 +11,8 @@ When adding a script, register a row below with its purpose and which machine / 
 | `start_body_control.sh` | One-click start of body_control (wraps the manual steps in *Prerequisite · Environment Setup* §2) | robot x86, user ubuntu |
 | `start_camera.sh` | One-click start of the Orbbec camera driver (prerequisite for perception atoms, e.g. atom25) | robot Orin, user nvidia |
 | `start_voice.sh` | One-click start of lyre voice (chat mode; prerequisite for voice atoms atom26~29) | robot Orin, user nvidia |
+| `start_xarm.sh` | One-click start of the XARM framework + MoveIt component (prerequisite for the arm-MoveIt atom, atom05) | robot x86, user ubuntu |
+| `stop_all.sh` | One-click cleanup: stop the sessions/processes started by these scripts (reset when things get messy) | the matching board (body/xarm on x86, camera/voice on Orin) |
 
 ## start_body_control.sh — one-click startup (quick path)
 
@@ -54,3 +56,30 @@ chmod +x scripts/start_voice.sh   # make executable, first time only
 - Success = voice services/topics appear: `ros2 service list | grep audio_play`, `ros2 topic list | grep audio`.
 - **Usually already running by default** — the script first checks whether lyre is up to avoid a double start; if so it just exits with a note.
 - If the workspace path differs, edit `ROS2WS` at the top of the script.
+
+## start_xarm.sh — one-click XARM + MoveIt startup
+
+Starts the XARM framework body + MoveIt component (a two-pane tmux session); prerequisite for the arm-MoveIt atom (atom05). ⚠ Commands are taken from the knowledge base's *TianYi 2.0 XARM startup* doc and are **not yet verified on the real robot**.
+
+```bash
+chmod +x scripts/start_xarm.sh
+bash scripts/start_xarm.sh sim     # sim mode (with RViz; no real robot / body_control — verify here first)
+bash scripts/start_xarm.sh real    # real mode (prerequisite: start body_control on the x86 first)
+source scripts/start_xarm.sh       # only source the XARM env into the current terminal (to run atom05)
+```
+
+- `bash` mode creates the `xarm` tmux session: pane 0 starts the XARM body, pane 1 (after a delay) starts the MoveIt component, then drops you in.
+- ★ XARM has **its own install** (`/home/ubuntu/XARM/install`, with `moveit_msgs`/`tianyi2_bringup`) — **not ros2ws**; the terminal running atom05 must source this.
+- Verify: `ros2 control list_controllers` (should include `moveit_*_arm_controller`), `ros2 action list | grep move_action`.
+- If the XARM path differs, edit `XARM_WS` at the top of the script.
+
+## stop_all.sh — one-click cleanup (reset when messed up)
+
+Stops all sessions/processes started by these scripts (`xarm`/`body`/`cam`/`voice` tmux + their launches + body_control), for when repeated/out-of-order starts leave the system stuck and body_control won't come up.
+
+```bash
+bash scripts/stop_all.sh    # on the matching board; killing body_control (root) uses sudo (may prompt)
+```
+
+- Then restart in the right order: **body_control first, then XARM/MoveIt** (see the full flow or the atom05 guide).
+- ⚠ Commands are written for the common case; process names/paths depend on your robot.
