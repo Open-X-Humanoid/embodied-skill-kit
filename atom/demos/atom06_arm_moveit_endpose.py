@@ -24,7 +24,7 @@
 
 ⚠ 待真机核实（首次跑必查）
   1) EE_LINK：末端 link 名（这里用 URDF 里的 left_tcp_link）
-  2) BASE_FRAME：规划/参考基坐标系（用 `base`；URDF 无 base_link，根是 base_footprint→base 零偏移，两者重合。
+  2) BASE_FRAME：规划/参考基坐标系（用 `base`；
      核实用 `ros2 run tf2_tools view_frames` 或
      `ros2 param get /move_group robot_description` 里 planning_frame 核实）
   3) XARM 的 MoveIt 是否支持标准 pose-goal 规划（若只认路点/JSON，改用官方 waypoint 接口）
@@ -57,7 +57,7 @@ except ImportError:
 # ── 机器人相关常量（★待真机核实）──
 GROUP = "left_arm"
 EE_LINK = "left_tcp_link"                 # 末端 link（URDF 有此 link）
-BASE_FRAME = "base"                       # 参考基坐标系（URDF 无 base_link；根 base_footprint 与 base 零偏移重合）
+BASE_FRAME = "base"                       # 参考基坐标系
 MOVEIT_CONTROLLER = "moveit_left_arm_controller"
 MOVE_ACTION = "/move_action"
 SWITCH_SRV = "/controller_manager/switch_controller"
