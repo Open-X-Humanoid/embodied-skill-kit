@@ -51,7 +51,6 @@ try:
     from controller_manager_msgs.srv import SwitchController, ListControllers
     from std_srvs.srv import SetBool
 except ImportError:
-    # 此处在 rclpy.init 之前、无节点可用，只能用 print
     print("❌ 找不到 moveit_msgs / controller_manager_msgs。请先 source XARM 环境：")
     print("   source /home/ubuntu/XARM/install/setup.bash")
     sys.exit(1)
