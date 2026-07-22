@@ -6,7 +6,7 @@
 
 | Companion code | Demo video |
 |---|---|
-| `atom/demos/atom12_waist_ros2.py` (native ROS2), `atom/demos/atom12_waist_ros2_robust.py` (production) | in `atom/assets/videos/`, same name as the code — watch 30s first |
+| `atom/demos/atom12_waist_ros2.py` (native ROS2), `atom/demos/atom12_waist_ros2_robust.py` (production) | in `atom/assets/videos/`, same name as the code |
 
 ## 1. At a Glance (read this first)
 

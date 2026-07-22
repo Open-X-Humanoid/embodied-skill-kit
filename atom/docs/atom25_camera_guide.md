@@ -6,7 +6,7 @@
 
 | Companion code | Demo video |
 |---|---|
-| `atom/demos/atom25_camera_orbbec.py` (native ROS2, RGB), `atom/demos/atom25_camera_orbbec_robust.py` (production, RGB+depth+intrinsics) | in `atom/assets/videos/`, same name as the code — watch 30s first |
+| `atom/demos/atom25_camera_orbbec.py` (native ROS2, RGB), `atom/demos/atom25_camera_orbbec_robust.py` (production, RGB+depth+intrinsics) | in `atom/assets/videos/`, same name as the code |
 
 ## 1. At a Glance (read this first)
 

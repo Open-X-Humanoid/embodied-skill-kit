@@ -6,7 +6,7 @@
 
 | 配套代码 | 演示视频 |
 |---|---|
-| `atom/demos/atom01_head_ros2.py`（ROS2 原生版） | `atom/assets/videos/` 下与配套代码同名，建议先看 30 秒 |
+| `atom/demos/atom01_head_ros2.py`（ROS2 原生版） | `atom/assets/videos/` 下与配套代码同名 |
 
 ## 1. 速览（点进来先看这块）
 
