@@ -142,6 +142,8 @@ Predict first, then run, and check against your prediction.
 | Symptom | Cause / fix |
 |---|---|
 | Joint doesn't move, no error | no subscriber on `/arm/cmd_pos` (body_control not up): `ros2 topic list \| grep arm` to confirm the topic exists |
+| Joint doesn't move but body_control is fine (typical right after running a MoveIt/QP arm atom) | **XARM is enabled and streams commands at 250Hz — direct commands get instantly overridden** (two-way mutual exclusion: XARM-family atoms auto-enable). The demo handles it: on detecting enable it **auto-disables and takes over** (log: "auto-closing XARM enable"); if auto-disable fails, run `ros2 service call /EAIHardware/set_arm_enable std_srvs/srv/SetBool "{data: false}"`. Ground truth: `ros2 service call /EAIHardware/debug eai_manipulator_msgs/srv/Info` → `arm_enable` |
+| Joint doesn't move, `/arm/cmd_pos` has multiple publishers | the teleop service `teleop_robot` auto-starts on boot and occupies the topic (mutually exclusive with programmatic control): `sudo systemctl stop teleop_robot` (comes back after reboot; inspect publishers with `ros2 topic info /arm/cmd_pos -v`) |
 | No `/arm/status` received | the plain version warns and assumes current angle = 0.0 (**large-displacement risk**) — **don't continue**; confirm `ros2 topic hz /arm/status` has data |
 | `import bodyctrl_msgs` fails | not sourced: `source /home/ubuntu/ros2ws/install/setup.bash` (every new terminal) |
 | Joint errors / not enabled | the joint may be in a fault state: check body_control logs for errors and that the e-stop is released |

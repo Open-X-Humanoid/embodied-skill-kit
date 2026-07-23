@@ -83,6 +83,40 @@ class ArmDemo(Node):
 
     # ── 辅助方法 ─────────────────────────────────────────────────────────────
 
+    def xarm_owns_arm(self) -> bool:
+        """互斥处理（实测坑）：XARM 已使能时它以 250Hz 高频流持续控制手臂，
+        直发 /arm/cmd_pos 会被瞬间覆盖 → 臂看似不动且无报错。
+        检测到使能即【自动关闭】接管手臂（XARM 系 demo 下次跑时会自动重新使能，双向零手动）。
+        自动关闭失败才报错退出。返回 True=仍被 XARM 占有、应退出。"""
+        try:
+            from eai_manipulator_msgs.srv import Info
+        except ImportError:
+            return False   # 无 XARM 消息包的环境，跳过检查
+        cli = self.create_client(Info, "/EAIHardware/debug")
+        if not cli.wait_for_service(timeout_sec=1.0):
+            self.destroy_client(cli)
+            return False   # XARM 未起，无冲突
+        future = cli.call_async(Info.Request())
+        rclpy.spin_until_future_complete(self, future, timeout_sec=3.0)
+        resp = future.result()
+        if resp is None or "arm_enable: 1" not in resp.info:
+            return False   # 未使能，无冲突
+        # XARM 使能中 → 自动关掉，交接控制权（等价手动 ros2 service call ... "{data: false}"）
+        from std_srvs.srv import SetBool
+        self.get_logger().info("检测到 XARM 已使能（会覆盖直发指令），自动关闭 XARM 使能、接管手臂...")
+        dis = self.create_client(SetBool, "/EAIHardware/set_arm_enable")
+        if dis.wait_for_service(timeout_sec=2.0):
+            future = dis.call_async(SetBool.Request(data=False))
+            rclpy.spin_until_future_complete(self, future, timeout_sec=5.0)
+            r = future.result()
+            if r is not None and r.success:
+                self.get_logger().info("✓ 已关闭 XARM 使能，直发接管（下次跑 XARM 系 demo 会自动重新使能）")
+                return False
+        self.get_logger().error(
+            "自动关闭 XARM 使能失败，直发会被覆盖，本 demo 退出。手动关闭后重试：\n"
+            '  ros2 service call /EAIHardware/set_arm_enable std_srvs/srv/SetBool "{data: false}"')
+        return True
+
     def wait_publisher_ready(self) -> bool:
         """
         ★ Bug修复2: 等待底层控制节点的订阅者连接后再发布。
@@ -193,6 +227,10 @@ def main() -> None:
     rclpy.init()
     node = ArmDemo()
     try:
+        # XARM 使能中会覆盖直发指令（互斥），明确报错退出
+        if node.xarm_owns_arm():
+            return
+
         # 等待底层控制节点订阅后再发布（防止首包丢失）
         node.wait_publisher_ready()
 

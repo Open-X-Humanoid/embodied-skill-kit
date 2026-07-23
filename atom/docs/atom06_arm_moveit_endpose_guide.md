@@ -18,27 +18,30 @@
 ### 1.1 Run it (same prerequisites as atom05)
 
 - **Board**: **x86, user ubuntu** (same board as body_control; XARM lives at `/home/ubuntu/XARM`).
-- ★**Source XARM, not ros2ws**: `source /home/ubuntu/XARM/install/setup.bash` (`moveit_msgs`, `tf2_ros` are here).
+- ★**Running the demo needs only base ROS 2** (`/opt/ros/humble`, auto-sourced by `~/.bashrc`): the demo imports only standard packages (`moveit_msgs`, `tf2_ros`, `sensor_msgs` all live in base ROS), so **you don't need to source XARM**. Sourcing XARM (`/home/ubuntu/XARM/install`, with `tianyi2_bringup`) is only for **starting** the XARM body + MoveIt, which `start_xarm.sh` does; source it manually only if `import moveit_msgs` fails: `source /home/ubuntu/XARM/install/setup.bash`.
 - **Real-robot SOP has 5 steps** (skip any → arm won't move): start body_control → start XARM body → start MoveIt component → **enable arm** → **switch to MoveIt controller** → (run the demo). The demo does the last two automatically.
 
 **One-click prerequisites** (recommended, see `scripts/start_xarm.sh`):
 
 ```bash
-# Verify in sim first (zero risk; no real robot / no body_control; use RViz or /joint_states)
-bash scripts/start_xarm.sh sim
+# Real robot (verified): start body_control on the x86 first, then XARM + MoveIt
+# ⓪ Stop the teleop service (auto-starts on boot, occupies /arm/cmd_pos; enable fails if it's running.
+#    Comes back automatically after reboot; harmless to run when already stopped — just run it once per boot.
+#    Optional pre-check:
+#    systemctl is-active teleop_robot   # active = running, stop it; inactive = already stopped;
+#                                       # "could not find unit" = this machine doesn't have it (older system), skip this step
+sudo systemctl stop teleop_robot
 
-# Real robot (start body_control on the x86 first)
 bash scripts/start_body_control.sh          # another terminal, see Prerequisite · Environment Setup
 bash scripts/start_xarm.sh real
 
-# In the terminal that runs the demo, set the env then run
-source scripts/start_xarm.sh                # = source /home/ubuntu/XARM/install/setup.bash
+# Run the demo (base ROS is already sourced; no need to source XARM)
 python3 atom/demos/atom06_arm_moveit_endpose.py
 ```
 
 What the demo does: read the current TCP pose → **keep the orientation, translate the end-effector up 5 cm** → return to the starting pose. Reversible and slow.
 
-> **Strongly prefer sim first**: Cartesian control collides with the robot itself more easily than joint control (the same end-effector point can map to several joint solutions). For the base ROS environment see *Prerequisite · Environment Setup* (`atom/docs/environment_setup.md`).
+> **Sim mode** (`bash scripts/start_xarm.sh sim`, with RViz, no real robot / no body_control): Cartesian control collides with the robot itself more easily than joint control (the same end-effector point can map to several joint solutions), so previewing in sim can help when no robot is available. ⚠ Not tested in sim in this project — commands should work in theory, adapt to your machine; `real` is what's verified. For the base ROS environment see *Prerequisite · Environment Setup* (`atom/docs/environment_setup.md`).
 
 ### 1.2 Interfaces (one more than atom05: TF)
 
@@ -169,6 +172,7 @@ atom05 sends 7 `JointConstraint`s; atom06 sends **one position constraint + one 
 | Symptom | Cause | Fix |
 |---|---|---|
 | `Invalid frameID "xxx" ... frame does not exist` | wrong frame name (**the root link is `base`, not `base_link`**) | verify with `ros2 run tf2_ros tf2_echo base left_tcp_link`; fix `BASE_FRAME`/`EE_LINK` |
+| enable errors / spawners stuck at `waiting for list_controllers` / plan succeeds but arm static | same root causes as atom05: renamed enable service, redundant-enable noise, teleop occupying the topic, missing library after system upgrade (pinocchio) | see the troubleshooting table in *Atom 5 · Arm MoveIt joint motion* (`atom/docs/atom05_arm_moveit_guide.md`) |
 | `timed out reading ... pose (TF)` | wrong frame name, or nobody publishes TF (MoveIt/robot_state_publisher not up) | `ros2 topic list \| grep tf` to confirm TF exists, then check the frame names |
 | `error_code=-31` NO_IK_SOLUTION | target unreachable / IK solution violates joint limits | shrink the translation; move the arm near the target first; check atom05's limit table |
 | `error_code=-18` INVALID_LINK_NAME | `EE_LINK` isn't a link in the URDF | check the `left_tcp_link` spelling |

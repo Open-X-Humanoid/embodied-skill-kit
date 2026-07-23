@@ -142,6 +142,8 @@ CMD_TOPIC     = "/xxx/cmd_pos"    # 换部位：换下发/状态话题名
 | 现象 | 原因 / 处理 |
 |---|---|
 | 关节不动、也不报错 | `/arm/cmd_pos` 没订阅者（body_control 没起）：`ros2 topic list \| grep arm` 确认话题在 |
+| 关节不动、body_control 正常（常见于刚跑过 MoveIt/QP 类手臂原子后） | **XARM 已使能、以 250Hz 持续发流控制手臂，直发指令被瞬间覆盖**（双向互斥：XARM 系原子自动开使能）。demo 已内置处理：检测到使能会**自动关闭接管**（日志见"自动关闭 XARM 使能、接管手臂"）；若自动关闭失败，手动 `ros2 service call /EAIHardware/set_arm_enable std_srvs/srv/SetBool "{data: false}"`。使能真值：`ros2 service call /EAIHardware/debug eai_manipulator_msgs/srv/Info` 看 `arm_enable` |
+| 关节不动、`/arm/cmd_pos` 有多个发布者 | 遥控服务 `teleop_robot` 开机自启占话题（与程序控臂互斥）：`sudo systemctl stop teleop_robot`（重启机器自动恢复；`ros2 topic info /arm/cmd_pos -v` 查发布者） |
 | 读不到 `/arm/status` | 简洁版会警告并假设当前角=0.0（**有大位移风险**）——**先别继续**，确认 `ros2 topic hz /arm/status` 有数据 |
 | `import bodyctrl_msgs` 报错 | 没 source：`source /home/ubuntu/ros2ws/install/setup.bash`（每个新终端都要） |
 | 关节报错/不使能 | 关节可能处于错误态：确认 body_control 日志无异常、急停已松开 |

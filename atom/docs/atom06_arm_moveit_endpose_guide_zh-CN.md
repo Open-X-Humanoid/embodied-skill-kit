@@ -18,27 +18,28 @@
 ### 1.1 跑起来（和 atom05 完全相同的前提）
 
 - **板子**：**x86、ubuntu 用户**（和 body_control 同板；XARM 装在 `/home/ubuntu/XARM`）。
-- ★**跑前 source 的是 XARM，不是 ros2ws**：`source /home/ubuntu/XARM/install/setup.bash`（`moveit_msgs`、`tf2_ros` 都在这）。
+- ★**跑 demo 只需基础 ROS 2**（`/opt/ros/humble`，`~/.bashrc` 已自动 source）：demo 只 import 标准包（`moveit_msgs`、`tf2_ros`、`sensor_msgs` 都在基础 ROS 里），**不需要 source XARM**。source XARM（`/home/ubuntu/XARM/install`，含 `tianyi2_bringup`）只用于**启动** XARM 本体+MoveIt，`start_xarm.sh` 已自动做；个别机器若 `import moveit_msgs` 失败再手动 `source /home/ubuntu/XARM/install/setup.bash`。
 - **真机 SOP 共 5 步**（缺任一步臂不动）：起 body_control → 起 XARM 本体 → 起 MoveIt 组件 → **使能手臂** → **切 MoveIt 控制器** →（跑 demo 下发）。后两步 demo 已自动做。
 
 **一键前置**（推荐，见 `scripts/start_xarm.sh`）：
 
 ```bash
-# 先仿真验证（零风险，不接真机/不需 body_control；用 RViz 或看 /joint_states）
-bash scripts/start_xarm.sh sim
+# ⓪ 停遥控服务（开机自启、占 /arm/cmd_pos，不停则使能会失败；重启机器自动恢复）
+#   已停止时再执行也无害，每次开机后跑一遍即可。想先确认状态（可选）：
+#   systemctl is-active teleop_robot   # active=在跑，需停；inactive=已停；报"找不到该服务"=本机没有它（旧系统），跳过本步
+sudo systemctl stop teleop_robot
 
-# 真机（先在 x86 起 body_control）
+# 真机（已验证）：先在 x86 起 body_control，再起 XARM + MoveIt
 bash scripts/start_body_control.sh          # 另开终端，见《前置 · 环境配置》
 bash scripts/start_xarm.sh real
 
-# 跑 demo 的终端配环境后运行
-source scripts/start_xarm.sh                # = source /home/ubuntu/XARM/install/setup.bash
+# 跑 demo（基础 ROS 已自动 source，直接跑；无需 source XARM）
 python3 atom/demos/atom06_arm_moveit_endpose.py
 ```
 
 demo 做的事：读当前末端 TCP 位姿 → **保持姿态不变、只让末端上抬 5cm** → 再回到起始位姿。可复位、低速。
 
-> **强烈建议先 sim**：末端控制比关节控制更容易撞到自己（同一个末端点可能对应多组关节解）。ROS 基础环境见《前置 · 环境配置》(`atom/docs/environment_setup_zh-CN.md`)。
+> **仿真模式**（`bash scripts/start_xarm.sh sim`，带 RViz、不接真机/不需 body_control）：末端控制比关节控制更容易撞到自己（同一个末端点可能对应多组关节解），无真机时可先在 sim 里看规划效果。⚠ 本项目未在 sim 下实测，命令理论可用、以你机器为准；已验证的是 real。ROS 基础环境见《前置 · 环境配置》(`atom/docs/environment_setup_zh-CN.md`)。
 
 ### 1.2 接口（比 atom05 多一个 TF）
 
@@ -169,6 +170,7 @@ atom05 给 7 个 `JointConstraint`；atom06 给**一个位置约束 + 一个姿�
 | 现象 | 原因 | 处理 |
 |---|---|---|
 | `Invalid frameID "xxx" ... frame does not exist` | frame 名写错（**根 link 是 `base` 不是 `base_link`**） | `ros2 run tf2_ros tf2_echo base left_tcp_link` 核实；改 `BASE_FRAME`/`EE_LINK` |
+| 使能相关报错 / spawner 卡 `waiting for list_controllers` / 规划成功但臂不动 | 与 atom05 完全同源：使能服务改名、重复使能噪音、teleop 占话题、升级缺库(pinocchio) | 见《原5 · 手臂 MoveIt 关节运动》排错表（`atom/docs/atom05_arm_moveit_guide_zh-CN.md`），逐条对号 |
 | `超时未读到 ... 位姿（TF）` | frame 名错，或 TF 没人发（MoveIt/robot_state_publisher 没起） | 先 `ros2 topic list \| grep tf` 确认 TF 在；再核 frame 名 |
 | `error_code=-31` NO_IK_SOLUTION | 目标够不着 / IK 解超关节限位 | 减小平移量；先把臂移到目标附近；对照 atom05 限位表 |
 | `error_code=-18` INVALID_LINK_NAME | `EE_LINK` 不是 URDF 里的 link | 核 `left_tcp_link` 拼写 |

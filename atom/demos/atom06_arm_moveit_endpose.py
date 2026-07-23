@@ -8,18 +8,23 @@
   给 MoveIt 一个"末端位姿"目标（位置 x/y/z + 姿态四元数），它规划无碰撞轨迹把 TCP 送到那儿。
   和 atom05 的区别：atom05 给"关节角"目标；atom06 给"末端在空间里的位姿"目标（更贴近"手要去哪")。
 
-简洁版 vs robust
-  本文件=简洁版：BEST_EFFORT 激活 moveit 控制器；从 TF 读当前 TCP 位姿 → 小幅平移 → 复位。
-  遇控制器冲突/严格校验参考 atom05_arm_moveit_robust.py 的做法（后续可补 atom06 robust）。
+控制器互斥（重要）
+  moveit/jointspace/endpose 各族控制器都抢同一条臂的关节接口，同一时刻只能一个 active
+  （如刚跑过 QP demo 的控制器还 active，moveit 就激活不了、执行报 CONTROL_FAILED -4）。
+  本脚本激活前自动查询并停掉占用本臂的其它 active 控制器，再 STRICT 切换（失败如实报错）。
+  流程：从 TF 读当前 TCP 位姿 → 小幅平移 → 复位。严格超时校验参考 atom05_arm_moveit_robust.py。
 
 运行前提（同 atom05：x86 / ubuntu；先 body_control → XARM 本体 → MoveIt 组件；本脚本自动使能+切控制器）
-  一键前置： bash scripts/start_xarm.sh sim   /   source scripts/start_xarm.sh
-  ★ 跑前 source 的是 XARM： source /home/ubuntu/XARM/install/setup.bash
+  一键前置： bash scripts/start_xarm.sh real
+  跑 demo 只需基础 ROS 2（~/.bashrc 已自动 source）；import 失败才 source /home/ubuntu/XARM/install/setup.bash
 
 接口（标准 MoveIt2）
   Action   /move_action    moveit_msgs/action/MoveGroup   目标=末端位姿约束(位置+姿态)，规划并执行
-  Service  /EAIHardware/set_arm_enable      real 模式使能（sim 无）
+  Service  <使能服务>      std_srvs/SetBool               real 模式使能（sim 无）
+           ★名随 XARM 版本变：/moveit_controller_enable（新）或 /EAIHardware/set_arm_enable（旧），
+             运行时逐个探测、调失败自动换下一个（见 ENABLE_SRV_CANDIDATES）
   Service  /controller_manager/switch_controller   激活 moveit_left_arm_controller
+  Service  /controller_manager/list_controllers    查占用本臂的控制器（自动避让用）
   TF       base → left_tcp_link             读当前末端 TCP 位姿作起点
 
 ⚠ 待真机核实（首次跑必查）
@@ -45,7 +50,7 @@ try:
     from moveit_msgs.msg import (MotionPlanRequest, Constraints, PlanningOptions,
                                  PositionConstraint, OrientationConstraint)
     from shape_msgs.msg import SolidPrimitive
-    from controller_manager_msgs.srv import SwitchController
+    from controller_manager_msgs.srv import SwitchController, ListControllers
     from std_srvs.srv import SetBool
     from tf2_ros import Buffer, TransformListener
 except ImportError:
@@ -58,9 +63,15 @@ GROUP = "left_arm"
 EE_LINK = "left_tcp_link"                 # 末端 link（URDF 有此 link）
 BASE_FRAME = "base"                       # 参考基坐标系
 MOVEIT_CONTROLLER = "moveit_left_arm_controller"
+JOINT_NAMES = [                           # 左臂 7 关节名（判断"谁占着本臂"用）
+    "shoulder_pitch_l_joint", "shoulder_roll_l_joint", "shoulder_yaw_l_joint",
+    "elbow_pitch_l_joint", "elbow_yaw_l_joint", "wrist_pitch_l_joint", "wrist_roll_l_joint",
+]
 MOVE_ACTION = "/move_action"
 SWITCH_SRV = "/controller_manager/switch_controller"
-ENABLE_SRV = "/EAIHardware/set_arm_enable"
+LIST_SRV = "/controller_manager/list_controllers"
+# 使能服务名随 XARM 版本变化；两个都是 std_srvs/SetBool，运行时逐个探测、调失败自动换下一个。
+ENABLE_SRV_CANDIDATES = ["/moveit_controller_enable", "/EAIHardware/set_arm_enable"]
 
 DEMO_DELTA_XYZ = [0.0, 0.0, 0.05]         # 末端小幅平移(m)：默认 +z 上抬 5cm，可复位
 VEL_SCALE = 0.1
@@ -73,35 +84,98 @@ class ArmEndposeDemo(Node):
         super().__init__("atom_arm_endpose_demo")
         self.client = ActionClient(self, MoveGroup, MOVE_ACTION)
         self.switch_cli = self.create_client(SwitchController, SWITCH_SRV)
-        self.enable_cli = self.create_client(SetBool, ENABLE_SRV)
+        self.list_cli = self.create_client(ListControllers, LIST_SRV)
         self.tf_buffer = Buffer()
         self.tf_listener = TransformListener(self.tf_buffer, self)
 
     def enable_arm(self):
-        """使能手臂（real 模式必需）。sim 无此服务，自动跳过。"""
-        if not self.enable_cli.wait_for_service(timeout_sec=3.0):
-            self.get_logger().warn(f"{ENABLE_SRV} 不在（sim 或 XARM 未起），跳过使能")
-            return
-        future = self.enable_cli.call_async(SetBool.Request(data=True))
-        rclpy.spin_until_future_complete(self, future, timeout_sec=5.0)
-        resp = future.result()
-        if resp is not None and resp.success:
-            self.get_logger().info("✓ 手臂已使能")
+        """使能手臂（real 模式必需）。sim 无此服务，自动跳过。
+        使能服务名随 XARM 版本不同（见 ENABLE_SRV_CANDIDATES），调失败自动换下一个。"""
+        tried = False   # 是否至少调到过一个使能服务（区分"都不在(sim)"和"都失败"）
+        for srv in ENABLE_SRV_CANDIDATES:
+            cli = self.create_client(SetBool, srv)
+            if not cli.wait_for_service(timeout_sec=3.0):
+                self.destroy_client(cli)
+                continue
+            tried = True
+            future = cli.call_async(SetBool.Request(data=True))
+            rclpy.spin_until_future_complete(self, future, timeout_sec=5.0)
+            resp = future.result()
+            if resp is not None and resp.success:
+                self.get_logger().info(f"✓ 手臂已使能（{srv}）")
+                return
+            msg = resp.message if resp is not None else "超时"
+            self.get_logger().warn(f"{srv} 使能未成功（{msg}），尝试下一个候选...")
+        if tried:
+            if self._already_enabled():
+                self.get_logger().info("臂已是使能状态（arm_enable=1）——重复使能被拒不影响运行，继续")
+                return
+            self.get_logger().error(
+                f"所有使能服务都失败（候选 {ENABLE_SRV_CANDIDATES}）且 arm_enable≠1。"
+                "自查：有程序占 /arm/cmd_pos？（bash scripts/stop_all.sh + sudo systemctl stop teleop_robot 清场）")
         else:
-            self.get_logger().error("使能失败（可能有别的程序占 /arm/cmd_pos，先 bash scripts/stop_all.sh 清场）")
+            self.get_logger().warn(f"使能服务都不在（候选 {ENABLE_SRV_CANDIDATES}）：sim 或 XARM 未起，跳过使能")
+
+    def _already_enabled(self):
+        """兜底：查 /EAIHardware/debug 的 arm_enable——使能是跨进程持续的硬件状态，
+        上个 demo 已使能时本次重复使能常被拒/超时，但臂其实可用。"""
+        try:
+            from eai_manipulator_msgs.srv import Info
+        except ImportError:
+            return False
+        cli = self.create_client(Info, "/EAIHardware/debug")
+        if not cli.wait_for_service(timeout_sec=2.0):
+            self.destroy_client(cli)
+            return False
+        future = cli.call_async(Info.Request())
+        rclpy.spin_until_future_complete(self, future, timeout_sec=3.0)
+        resp = future.result()
+        return resp is not None and "arm_enable: 1" in resp.info
+
+    def _scan_arm_controllers(self, timeout=5.0):
+        """查 controller_manager：返回 (MoveIt控制器是否已active, 占用本臂关节、需先停的其它active控制器名)。
+        moveit/jointspace/endpose 各族控制器互斥——只要 claim 了本臂任一关节接口就要先停。"""
+        if not self.list_cli.wait_for_service(timeout_sec=timeout):
+            self.get_logger().warn(f"{LIST_SRV} 不在，无法自动避让，按“本臂未被占用”处理")
+            return (False, [])
+        future = self.list_cli.call_async(ListControllers.Request())
+        rclpy.spin_until_future_complete(self, future, timeout_sec=timeout)
+        resp = future.result()
+        if resp is None:
+            self.get_logger().warn("查询控制器超时，按“本臂未被占用”处理")
+            return (False, [])
+        already_active, conflict = False, []
+        for c in resp.controller:
+            if c.state != "active":
+                continue
+            if c.name == MOVEIT_CONTROLLER:
+                already_active = True
+                continue
+            if any(ci.split("/")[0] in JOINT_NAMES for ci in c.claimed_interfaces):
+                conflict.append(c.name)
+        return (already_active, conflict)
 
     def activate_moveit_controller(self):
-        """激活 MoveIt 控制器（不激活执行会 CONTROL_FAILED -4）。简洁版 BEST_EFFORT。"""
+        """激活 MoveIt 控制器（不激活执行会 CONTROL_FAILED -4）：
+        先停掉占用本臂的其它 active 控制器（如刚跑过 QP demo 残留的），再 STRICT 切换（失败如实报错）。"""
         if not self.switch_cli.wait_for_service(timeout_sec=5.0):
             self.get_logger().warn(f"{SWITCH_SRV} 不在，跳过自动切换（请手动 ros2 control switch_controllers）")
             return
+        already_active, to_stop = self._scan_arm_controllers()
+        if already_active and not to_stop:
+            self.get_logger().info(f"{MOVEIT_CONTROLLER} 已激活且无冲突，无需切换")
+            return
         req = SwitchController.Request()
-        req.activate_controllers = [MOVEIT_CONTROLLER]
-        req.strictness = SwitchController.Request.BEST_EFFORT
+        req.activate_controllers = [] if already_active else [MOVEIT_CONTROLLER]
+        req.deactivate_controllers = to_stop
+        req.strictness = SwitchController.Request.STRICT
+        if to_stop:
+            self.get_logger().info(f"先停占用本臂的控制器: {to_stop}")
         future = self.switch_cli.call_async(req)
         rclpy.spin_until_future_complete(self, future, timeout_sec=5.0)
-        ok = future.result() is not None and future.result().ok
-        self.get_logger().info(f"激活 {MOVEIT_CONTROLLER}: {'成功' if ok else '未确认(可能已激活)'}")
+        resp = future.result()
+        ok = resp is not None and resp.ok
+        self.get_logger().info(f"切到 {MOVEIT_CONTROLLER}: {'成功' if ok else '失败(检查控制器名/资源占用)'}")
 
     def read_ee_pose(self, timeout=5.0):
         """用 TF 读当前末端 TCP 在 BASE_FRAME 下的位姿（Pose）。读不到返回 None。"""

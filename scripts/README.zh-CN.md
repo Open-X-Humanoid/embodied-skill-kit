@@ -59,17 +59,17 @@ chmod +x scripts/start_voice.sh   # 首次赋可执行权限（只需一次）
 
 ## start_xarm.sh —— 一键启动 XARM + MoveIt（快速版）
 
-启动 XARM 框架本体 + MoveIt 组件（tmux 两窗格），是手臂 MoveIt 原子（atom05）的前置。⚠ 命令取自知识库《天轶2.0 XARM启动》，**尚未真机核实**。
+启动 XARM 框架本体 + MoveIt 组件（tmux 两窗格），是手臂 MoveIt 原子（atom05）的前置。real 模式已在天轶2.0真机跑通。
 
 ```bash
 chmod +x scripts/start_xarm.sh
-bash scripts/start_xarm.sh sim     # 仿真模式（带 RViz，不需真机/body_control，推荐先用它验证）
-bash scripts/start_xarm.sh real    # 真机模式（前提：先在 x86 起 body_control）
-source scripts/start_xarm.sh       # 只给【当前终端】source XARM 环境（跑 atom05 用）
+bash scripts/start_xarm.sh real    # 真机模式（已验证；前提：先在 x86 起 body_control）
+bash scripts/start_xarm.sh sim     # 仿真模式（带 RViz，不需真机/body_control）——本项目未在 sim 下实测，供无真机时参考
+source scripts/start_xarm.sh       # 仅当 import moveit_msgs 失败时，给当前终端补 source XARM（正常不需要）
 ```
 
 - `bash` 模式建 `xarm` tmux 会话：窗格0 起 XARM 本体、窗格1 延时后起 MoveIt 组件，并带你进会话。
-- ★ XARM 有**自己的 install**（`/home/ubuntu/XARM/install`，含 `moveit_msgs`/`tianyi2_bringup`），**不是 ros2ws**——跑 atom05 的终端要 source 这个。
+- ★ 跑 demo **只需基础 ROS 2**（`/opt/ros/humble`，`~/.bashrc` 已自动 source）——demo 只 import 标准消息包（`moveit_msgs` 等都在基础 ROS 里），**不必 source XARM**。XARM 的 install（`/home/ubuntu/XARM/install`，含 `tianyi2_bringup` launch）只为**启动** XARM 本体+MoveIt（`bash` 模式已在窗格内自动 source）；个别机器 `import moveit_msgs` 失败时才手动 source XARM。
 - 验证：`ros2 control list_controllers`（含 `moveit_*_arm_controller`）、`ros2 action list | grep move_action`。
 - 若 XARM 路径不同，改脚本顶部 `XARM_WS`。
 

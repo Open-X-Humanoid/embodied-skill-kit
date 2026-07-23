@@ -37,6 +37,8 @@ HEAD_SOFT_LIMITS: dict[int, tuple[float, float]] = {
 
 PUB_READY_TIMEOUT = 3.0   # s
 STATUS_TIMEOUT    = 5.0   # s
+REACH_TOL         = 0.05  # rad, 到位容差(~3°)
+REACH_TIMEOUT     = 4.0   # s, 等到位最长时间
 
 
 class HeadDemo(Node):
@@ -90,6 +92,24 @@ class HeadDemo(Node):
             f"超时 {timeout}s 未读到头部完整状态反馈，拒绝运动。")
         return False
 
+    def wait_until_reached(self, targets: dict[int, float],
+                           tol: float = REACH_TOL,
+                           timeout: float = REACH_TIMEOUT) -> bool:
+        """
+        ★ 到位检查(闭环)：轮询状态反馈，等所有目标关节进入 目标±tol 才返回。
+          比"固定等 N 秒"可靠——真到位才继续；超时(负载重/未达容差)返回 False 并告警。
+        """
+        t0 = time.time()
+        while rclpy.ok() and time.time() - t0 < timeout:
+            rclpy.spin_once(self, timeout_sec=0.05)
+            with self._lock:
+                if all(abs(self.cur_pos.get(mid, 1e9) - tgt) <= tol
+                       for mid, tgt in targets.items()):
+                    return True
+        self.get_logger().warn(
+            f"超时 {timeout}s 未确认到位（负载重 / 未达容差 {tol}rad）。")
+        return False
+
     def _validate(self, roll: float, pitch: float, yaw: float) -> bool:
         """
         ★ Bug修复3: 目标角度软限位校验。
@@ -108,8 +128,8 @@ class HeadDemo(Node):
     def move_to(self, roll: float, pitch: float, yaw: float,
                 hold: float = 1.5) -> bool:
         """
-        移动头部到 (roll, pitch, yaw) 并保持 hold 秒。
-        返回 False 表示安全校验未通过。
+        移动头部到 (roll, pitch, yaw)，等到位后保持 hold 秒。
+        返回 False = 安全校验未过 / 超时未到位；True = 已到位。
 
         ★ Bug修复4: hold 期间用 spin_once 代替 time.sleep，
           保持状态反馈回调的活跃，cur_pos 持续更新。
@@ -128,6 +148,11 @@ class HeadDemo(Node):
         self.get_logger().info(
             f"头部 → roll={roll:+.3f} pitch={pitch:+.3f} yaw={yaw:+.3f} rad")
 
+        # ★ Bug修复5: 到位检查(闭环)——发完不是"固定等 hold 秒"就完事，
+        #   而是轮询状态反馈、等三关节真正进入目标±容差；返回值即"是否到位"。
+        reached = self.wait_until_reached({1: roll, 2: pitch, 3: yaw})
+
+        # 到位后再保持 hold 秒便于观察姿态（spin_once 保活回调，不用 sleep）
         deadline = time.time() + hold
         while rclpy.ok():
             # remaining 可能因竞态变负（条件判断与此行之间时间已越过 deadline）；
@@ -137,7 +162,7 @@ class HeadDemo(Node):
                 break
             rclpy.spin_once(self, timeout_sec=min(0.05, remaining))
 
-        return True
+        return reached
 
 
 # ── 主程序 ────────────────────────────────────────────────────────────────────

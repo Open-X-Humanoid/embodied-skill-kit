@@ -9,22 +9,24 @@
   （读当前 → 规划无碰撞轨迹 → 执行 → 回原位）。不像 atom04 硬发角度，这里是"说去哪、它自己规划怎么去"。
 
 robust 比简洁版 atom05_arm_moveit.py 多做了
-  1) 切控制器前先查 controller_manager，自动停掉占用本臂关节的其它 active 控制器，再用 STRICT 切换
-     （切换真失败会如实报错），避免"没停旧控制器 → 执行 CONTROL_FAILED(-4)"。
-  2) MoveGroup 发送/执行都带超时 + None 检查，避免卡死。
-  （简洁版假设 XARM 刚起、本臂无冲突，直接 BEST_EFFORT 激活 moveit 控制器。）
+  MoveGroup 发送/执行都带超时 + None 检查，避免卡死。
+  （控制器自动避让——先停占用本臂的 active 控制器再 STRICT 切换——两版都有，
+    这是真机实测的常态坑：QP/moveit 各族控制器互斥，上个 demo 的控制器常残留 active。）
 
 运行前提（x86 / ubuntu；官方 5 步 SOP，缺一步臂不动，后两步本脚本自动做）
   1) 起 body_control（x86，真机必需；仿真跳过）
   2) 起 XARM 本体：   ros2 launch tianyi2_bringup tianyi2.launch.py hardware:=real   （仿真: gui:=true）
   3) 起 MoveIt 组件： ros2 launch tianyi2_bringup tianyi2_moveit.launch.py
   4) ③使能手臂  ④切 moveit 控制器（本脚本自动）
-  ★ 跑前 source 的是 XARM，不是 ros2ws： source /home/ubuntu/XARM/install/setup.bash
-     一键前置： bash scripts/start_xarm.sh sim   /   source scripts/start_xarm.sh
+  ★ 跑 demo 只需基础 ROS 2（/opt/ros/humble，~/.bashrc 已自动 source）：demo 只 import 标准消息包，
+     【无需 source XARM】；仅当 import moveit_msgs 失败才 source /home/ubuntu/XARM/install/setup.bash。
+     上面 2/3 步的 XARM launch 需要 XARM 环境，一键前置已代劳： bash scripts/start_xarm.sh real
 
 接口（标准 MoveIt2 + XARM 使能）
   Action   /move_action                            moveit_msgs/action/MoveGroup   送目标关节角、规划并执行
-  Service  /EAIHardware/set_arm_enable             std_srvs/SetBool               real 模式使能（sim 无）
+  Service  <使能服务>                                std_srvs/SetBool               real 模式使能（sim 无）
+       ★服务名随 XARM 版本变化：/moveit_controller_enable（新）或 /EAIHardware/set_arm_enable（旧），
+         类型都是 SetBool。运行时探测哪个在就用哪个（见 ENABLE_SRV_CANDIDATES），换/升级机器人不用改代码。
   Service  /controller_manager/switch_controller                                  激活 moveit_*_arm_controller
   Service  /controller_manager/list_controllers                                   查占用本臂的控制器（自动避让用）
   Topic    /joint_states                           sensor_msgs/JointState         读当前关节角作起点
@@ -32,7 +34,7 @@ robust 比简洁版 atom05_arm_moveit.py 多做了
 两个必知坑（real 模式）
   1) 不使能 → 规划/执行都报成功，但 XARM 不发 cmd_pos → 物理臂不动（头号坑）。
   2) 不切 moveit 控制器 → 执行 error_code=-4 CONTROL_FAILED。
-  sim 无 /EAIHardware，使能自动跳过；动作在 RViz / joint_states 看。
+  sim 无使能服务，使能自动跳过；动作在 RViz / joint_states 看。
 
 安全
   手臂力矩大：臂周围无人无物、急停在手、建议先仿真；首次 VEL/ACC_SCALE=0.1，本 demo 从当前角小幅可复位。
@@ -65,7 +67,9 @@ JOINT_NAMES = [
 MOVE_ACTION = "/move_action"
 SWITCH_SRV = "/controller_manager/switch_controller"
 LIST_SRV = "/controller_manager/list_controllers"
-ENABLE_SRV = "/EAIHardware/set_arm_enable"
+# 使能服务名随 XARM 版本变化（升级后由 /EAIHardware/set_arm_enable 改名为 /moveit_controller_enable）；
+# 两个都是 std_srvs/SetBool，运行时探测哪个在就用哪个。新名在前，探测更快。
+ENABLE_SRV_CANDIDATES = ["/moveit_controller_enable", "/EAIHardware/set_arm_enable"]
 
 DEMO_DELTA = [0.0, 0.0, 0.0, 0.3, 0.0, 0.0, 0.0]   # 只动肘俯仰 +0.3rad(~17°)，可复位
 VEL_SCALE = 0.1
@@ -79,7 +83,6 @@ class ArmMoveItDemo(Node):
         self.client = ActionClient(self, MoveGroup, MOVE_ACTION)
         self.switch_cli = self.create_client(SwitchController, SWITCH_SRV)
         self.list_cli = self.create_client(ListControllers, LIST_SRV)
-        self.enable_cli = self.create_client(SetBool, ENABLE_SRV)
         self.cur = {}   # {joint_name: position}
         self.sub_ = self.create_subscription(JointState, "/joint_states", self._on_js, 10)
 
@@ -88,17 +91,50 @@ class ArmMoveItDemo(Node):
             self.cur[name] = pos
 
     def enable_arm(self):
-        """使能手臂（real 模式必需：使能后 XARM 才向 body_control 发指令）。sim 无此服务，自动跳过。"""
-        if not self.enable_cli.wait_for_service(timeout_sec=3.0):
-            self.get_logger().warn(f"{ENABLE_SRV} 不在（sim 或 XARM 未起），跳过使能")
-            return
-        future = self.enable_cli.call_async(SetBool.Request(data=True))
-        rclpy.spin_until_future_complete(self, future, timeout_sec=5.0)
-        resp = future.result()
-        if resp is not None and resp.success:
-            self.get_logger().info("✓ 手臂已使能")
+        """使能手臂（real 模式必需：使能后 XARM 才向 body_control 发指令）。sim 无此服务，自动跳过。
+        使能服务名随 XARM 版本不同（见 ENABLE_SRV_CANDIDATES），探测哪个在就用哪个。"""
+        tried = False   # 是否至少调到过一个使能服务（区分"都不在(sim)"和"都失败"）
+        for srv in ENABLE_SRV_CANDIDATES:
+            cli = self.create_client(SetBool, srv)
+            if not cli.wait_for_service(timeout_sec=3.0):
+                self.destroy_client(cli)
+                continue
+            tried = True
+            future = cli.call_async(SetBool.Request(data=True))
+            rclpy.spin_until_future_complete(self, future, timeout_sec=5.0)
+            resp = future.result()
+            if resp is not None and resp.success:
+                self.get_logger().info(f"✓ 手臂已使能（{srv}）")
+                return
+            # 某版本 XARM 的新使能服务自身有 bug（如缺 head 控制器致 switch failed）——
+            # 调失败不放弃，落到下一个候选（旧服务）再试
+            msg = resp.message if resp is not None else "超时"
+            self.get_logger().warn(f"{srv} 使能未成功（{msg}），尝试下一个候选...")
+        if tried:
+            if self._already_enabled():
+                self.get_logger().info("臂已是使能状态（arm_enable=1）——重复使能被拒不影响运行，继续")
+                return
+            self.get_logger().error(
+                f"所有使能服务都失败（候选 {ENABLE_SRV_CANDIDATES}）且 arm_enable≠1。"
+                "自查：有程序占 /arm/cmd_pos？（bash scripts/stop_all.sh + sudo systemctl stop teleop_robot 清场）")
         else:
-            self.get_logger().error("使能失败（可能有别的程序占 /arm/cmd_pos，先 bash scripts/stop_all.sh 清场）")
+            self.get_logger().warn(f"使能服务都不在（候选 {ENABLE_SRV_CANDIDATES}）：sim 或 XARM 未起，跳过使能")
+
+    def _already_enabled(self):
+        """兜底：查 /EAIHardware/debug 的 arm_enable——使能是跨进程持续的硬件状态，
+        上个 demo 已使能时本次重复使能常被拒/超时，但臂其实可用。"""
+        try:
+            from eai_manipulator_msgs.srv import Info
+        except ImportError:
+            return False
+        cli = self.create_client(Info, "/EAIHardware/debug")
+        if not cli.wait_for_service(timeout_sec=2.0):
+            self.destroy_client(cli)
+            return False
+        future = cli.call_async(Info.Request())
+        rclpy.spin_until_future_complete(self, future, timeout_sec=3.0)
+        resp = future.result()
+        return resp is not None and "arm_enable: 1" in resp.info
 
     def _scan_arm_controllers(self, joint_names, timeout=5.0):
         """查 controller_manager：返回 (MoveIt控制器是否已active, 占用本臂关节、需先停的active控制器名)。
