@@ -18,7 +18,7 @@
 ### 1.1 跑起来（和 atom05 完全相同的前提）
 
 - **板子**：**x86、ubuntu 用户**（和 body_control 同板；XARM 装在 `/home/ubuntu/XARM`）。
-- ★**跑 demo 只需基础 ROS 2**（`/opt/ros/humble`，`~/.bashrc` 已自动 source）：demo 只 import 标准包（`moveit_msgs`、`tf2_ros`、`sensor_msgs` 都在基础 ROS 里），**不需要 source XARM**。source XARM（`/home/ubuntu/XARM/install`，含 `tianyi2_bringup`）只用于**启动** XARM 本体+MoveIt，`start_xarm.sh` 已自动做；个别机器若 `import moveit_msgs` 失败再手动 `source /home/ubuntu/XARM/install/setup.bash`。
+- ★**每个运行 demo 的新终端都要 source XARM**：`source /home/ubuntu/XARM/install/setup.bash`。启动脚本只会在它创建的 tmux 窗格内 source，不会改变另开的 demo 终端。
 - **真机 SOP 共 5 步**（缺任一步臂不动）：起 body_control → 起 XARM 本体 → 起 MoveIt 组件 → **使能手臂** → **切 MoveIt 控制器** →（跑 demo 下发）。后两步 demo 已自动做。
 
 **一键前置**（推荐，见 `scripts/start_xarm.sh`）：
@@ -33,9 +33,12 @@ sudo systemctl stop teleop_robot
 bash scripts/start_body_control.sh          # 另开终端，见《前置 · 环境配置》
 bash scripts/start_xarm.sh real
 
-# 跑 demo（基础 ROS 已自动 source，直接跑；无需 source XARM）
+# 在新终端跑 demo
+source /home/ubuntu/XARM/install/setup.bash
 python3 atom/demos/atom06_arm_moveit_endpose.py
 ```
+
+> ⚠ **高频坑：`error_code=99999` 秒失败（真机极易触发）**——MoveIt 限位表比 URDF **紧**（如 `shoulder_yaw_l_joint` MoveIt=±1.5、URDF=±2.96），QP/遥控按宽限位走。**跑过 QP 类原子（atom07/08）或遥控后，臂常停在 MoveIt 界外 → 本原子秒拒 99999**（特征：毫秒级失败、QP 类却正常）。确认：`tmux capture-pane -t xarm.1 -p -J -S -400 | grep -i 'outside bounds'` 看点名关节；处理：用 QP 把它挪回范围（详见《原5》排错表 99999 行）。
 
 demo 做的事：读当前末端 TCP 位姿 → **保持姿态不变、只让末端上抬 5cm** → 再回到起始位姿。可复位、低速。
 
@@ -46,7 +49,7 @@ demo 做的事：读当前末端 TCP 位姿 → **保持姿态不变、只让末
 | 接口 | 类型 | 作用 |
 |---|---|---|
 | `/move_action` | `moveit_msgs/action/MoveGroup`（**Action**） | 送**末端位姿约束**，MoveIt 反解 IK、规划并执行 |
-| `/EAIHardware/set_arm_enable` | `std_srvs/SetBool`（Service） | real 模式使能手臂（sim 无此服务） |
+| `/moveit_controller_enable`（旧版为 `/EAIHardware/set_arm_enable`） | `std_srvs/SetBool`（Service） | real 模式使能手臂；服务名随 XARM 版本变，demo 自动探测并回退（sim 无此服务） |
 | `/controller_manager/switch_controller` | ros2_control（Service） | 激活 `moveit_left_arm_controller` |
 | **`/tf`、`/tf_static`** | `tf2_msgs/TFMessage`（Topic） | **读当前末端 TCP 位姿作起点**（atom05 用 `/joint_states`，这里用 TF） |
 

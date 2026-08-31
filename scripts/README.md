@@ -65,11 +65,11 @@ Starts the XARM framework body + MoveIt component (a two-pane tmux session); pre
 chmod +x scripts/start_xarm.sh
 bash scripts/start_xarm.sh real    # real mode (verified; prerequisite: start body_control on the x86 first)
 bash scripts/start_xarm.sh sim     # sim mode (with RViz; no real robot / body_control) — not tested in sim in this project, for reference when no robot is available
-source scripts/start_xarm.sh       # only if 'import moveit_msgs' fails — adds XARM to the current terminal (normally unnecessary)
+source scripts/start_xarm.sh       # in every new terminal that runs an arm demo or Skill
 ```
 
 - `bash` mode creates the `xarm` tmux session: pane 0 starts the XARM body, pane 1 (after a delay) starts the MoveIt component, then drops you in.
-- ★ Running the demo needs **only base ROS 2** (`/opt/ros/humble`, auto-sourced by `~/.bashrc`) — the demo imports only standard message packages (`moveit_msgs` etc. live in base ROS), so **no need to source XARM**. XARM's install (`/home/ubuntu/XARM/install`, with the `tianyi2_bringup` launch) is only for **starting** the XARM body + MoveIt (the `bash` mode sources it inside the panes); source XARM manually only if `import moveit_msgs` fails on your machine.
+- ★ `bash scripts/start_xarm.sh real` sources XARM only inside its tmux panes. In **every new terminal that runs an arm demo or Skill**, run `source scripts/start_xarm.sh` first. This exposes both MoveIt interfaces and XARM-only QP messages such as `eai_manipulator_msgs`.
 - Verify: `ros2 control list_controllers` (should include `moveit_*_arm_controller`), `ros2 action list | grep move_action`.
 - If the XARM path differs, edit `XARM_WS` at the top of the script.
 

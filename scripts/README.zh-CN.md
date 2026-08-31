@@ -65,11 +65,11 @@ chmod +x scripts/start_voice.sh   # 首次赋可执行权限（只需一次）
 chmod +x scripts/start_xarm.sh
 bash scripts/start_xarm.sh real    # 真机模式（已验证；前提：先在 x86 起 body_control）
 bash scripts/start_xarm.sh sim     # 仿真模式（带 RViz，不需真机/body_control）——本项目未在 sim 下实测，供无真机时参考
-source scripts/start_xarm.sh       # 仅当 import moveit_msgs 失败时，给当前终端补 source XARM（正常不需要）
+source scripts/start_xarm.sh       # 每个运行手臂 demo 或 Skill 的新终端都要执行
 ```
 
 - `bash` 模式建 `xarm` tmux 会话：窗格0 起 XARM 本体、窗格1 延时后起 MoveIt 组件，并带你进会话。
-- ★ 跑 demo **只需基础 ROS 2**（`/opt/ros/humble`，`~/.bashrc` 已自动 source）——demo 只 import 标准消息包（`moveit_msgs` 等都在基础 ROS 里），**不必 source XARM**。XARM 的 install（`/home/ubuntu/XARM/install`，含 `tianyi2_bringup` launch）只为**启动** XARM 本体+MoveIt（`bash` 模式已在窗格内自动 source）；个别机器 `import moveit_msgs` 失败时才手动 source XARM。
+- ★ `bash scripts/start_xarm.sh real` 只会在它创建的 tmux 窗格内 source XARM。**每个运行手臂 demo 或 Skill 的新终端**都要先执行 `source scripts/start_xarm.sh`，这样 MoveIt 接口和 QP 所需的 `eai_manipulator_msgs` 都可见。
 - 验证：`ros2 control list_controllers`（含 `moveit_*_arm_controller`）、`ros2 action list | grep move_action`。
 - 若 XARM 路径不同，改脚本顶部 `XARM_WS`。
 

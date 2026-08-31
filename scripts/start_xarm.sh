@@ -7,10 +7,9 @@
 #   2) 只给【当前终端】配环境：  source scripts/start_xarm.sh            （注意是 source）
 #
 # ⚠ 在机器人 x86、ubuntu 用户上执行（XARM 与 body_control 同在 x86；路径 /home/ubuntu 即 x86 用户）。
-# ⚠ 跑 demo 只需基础 ROS 2（/opt/ros/humble，~/.bashrc 已自动 source）——demo 只 import 标准消息包
-#   （moveit_msgs 等都在基础 ROS 里），【不需要 source XARM】。source XARM（/home/ubuntu/XARM/install，
-#   含 tianyi2_bringup launch）只为【启动】XARM 本体+MoveIt，本脚本 bash 模式已自动做；
-#   个别机器若 demo 报"找不到 moveit_msgs"，才用【用法 2】给当前终端补 source XARM。
+# ⚠ 启动脚本只会在 tmux 窗格内 source XARM，不会改变你另开的 demo 终端。
+#   因此每个运行手臂 demo/Skill 的新终端都应先执行【用法 2】。MoveIt 消息及 QP 使用的
+#   eai_manipulator_msgs 都由该工作空间提供，统一 source 可避免包或接口找不到。
 # ⚠ real（真机，已验证）前必须先在 x86 起 body_control（见 start_body_control.sh）。
 #   sim（仿真）不接真机、不需 body_control、带 RViz，供无真机时参考——本项目未在 sim 下实测。
 
@@ -84,11 +83,11 @@ tmux split-window -h -t "$SESSION" \
      echo; echo '[MoveIt 组件已退出，停在 shell]'; exec bash"
 tmux select-layout -t "$SESSION" even-horizontal
 
-echo "[提示] 验证就绪（另开终端；基础 ROS 已自动 source，下列验证命令直接可跑）:"
+echo "[提示] 验证就绪（另开终端先执行：source scripts/start_xarm.sh）:"
 echo "    ros2 control list_controllers          # 应含 moveit_*_arm_controller"
 echo "    ros2 action list | grep move_action    # MoveIt 起来了 → atom05 才连得上"
 [ "$MODE" = "real" ] && echo "    ros2 node list | grep /EAIHardware     # 真机通信节点，且日志无'看门狗超时'"
-echo "  跑 demo： 新终端直接 python3 atom/demos/atom05_arm_moveit.py（只需基础 ROS，无需 source XARM；import 失败才 source $SETUP）"
+echo "  跑 demo： 新终端先 source scripts/start_xarm.sh，再运行对应 atom/Skill"
 echo "  保持运行并退出界面： Ctrl+B 然后按 D"
 sleep 1
 exec tmux attach -t "$SESSION"

@@ -4,19 +4,15 @@
 
 A set of graded, runnable examples with companion guides that takes secondary developers from *making a single body part move* all the way to *running a full task in a real scene*. Examples are distilled from three real deployed projects: box-moving, depalletizing, and toy-sorting.
 
-## Five Stages (from atom to scene)
+## Three Stages (from atom to scene)
 
-Content grows through five stages — the names keep a "build up from the smallest unit" metaphor; the subtitle is the plain-language version:
+Content grows through three stages — from isolated control primitives, to reusable robot capabilities, and finally to complete jobs:
 
 | Stage | In one line | Question it answers | Status |
 |---|---|---|---|
 | ①&nbsp;Atom | Make a single body part move | How do you move one part? Control interface, units, limits | ✅ In progress |
-| ②&nbsp;Molecule | Coordinate parts into one motion | How do multiple parts coordinate? | 🚧 Planned |
-| ③&nbsp;Skill | Turn motion into a reliable task that reports success/failure | How does motion become reliable & report status? | 🚧 Planned |
-| ④&nbsp;Scene | Orchestrate skills into a full job | How are skills orchestrated into a job? | 🚧 Planned |
-| ⑤&nbsp;Evolution | Reshape the underlying capability (models / force control / IK) | How do you change the low-level capability? | 🚧 Planned |
-
-Each stage directory splits into `demos/` (example code) and `docs/` (guides); **see the corresponding directory for the concrete list**.
+| ②&nbsp;Skill | Coordinate perception and motion into a reusable capability | How does a robot complete one meaningful task? | ✅ Finger Tap and Bottle Grasp available |
+| ③&nbsp;Scene | Orchestrate skills into a full job | How are skills orchestrated into a job? | 🚧 Planned |
 
 ## Quick Start
 
@@ -39,6 +35,10 @@ When you're ready to run on the real robot:
 
 3. Read the matching guide `atomNN_..._guide.md` to understand the code, then tweak-and-observe.
 
+Continue with [Skill 1 · Finger Tap](skill/skill01_finger_tap/docs/skill01_finger_tap_guide.md) when you are ready to combine perception and arm control.
+
+Then explore [Skill 2 · Bottle Grasp](skill/skill02_bottle_grasp/docs/skill02_bottle_grasp_guide.md) to combine object perception, box geometry, arm motion, and dexterous-hand control.
+
 ## Repository Layout
 
 ```
@@ -46,6 +46,10 @@ atom/
   demos/     example code (atomNN_<part>_<variant>.py; _robust = production version)
   docs/      guides — English `name.md` (default), Chinese `name_zh-CN.md`
   assets/    demo videos / rosbag recordings
+skill/
+  skill01_finger_tap/   AprilTag perception + QP arm control for one complete tap
+  skill02_bottle_grasp/ bottle/box perception + MoveIt/QP control for grasp and placement
+scene/                  multi-skill task orchestration (planned)
 scripts/     cross-stage utility scripts (e.g. one-click body_control startup)
 ```
 

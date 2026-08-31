@@ -18,7 +18,7 @@
 ### 1.1 Run it (same prerequisites as atom05)
 
 - **Board**: **x86, user ubuntu** (same board as body_control; XARM lives at `/home/ubuntu/XARM`).
-- ★**Running the demo needs only base ROS 2** (`/opt/ros/humble`, auto-sourced by `~/.bashrc`): the demo imports only standard packages (`moveit_msgs`, `tf2_ros`, `sensor_msgs` all live in base ROS), so **you don't need to source XARM**. Sourcing XARM (`/home/ubuntu/XARM/install`, with `tianyi2_bringup`) is only for **starting** the XARM body + MoveIt, which `start_xarm.sh` does; source it manually only if `import moveit_msgs` fails: `source /home/ubuntu/XARM/install/setup.bash`.
+- ★**Source XARM in every terminal that runs the demo**: `source /home/ubuntu/XARM/install/setup.bash`. The startup script sources XARM inside its tmux panes only; it does not modify a separately opened demo terminal.
 - **Real-robot SOP has 5 steps** (skip any → arm won't move): start body_control → start XARM body → start MoveIt component → **enable arm** → **switch to MoveIt controller** → (run the demo). The demo does the last two automatically.
 
 **One-click prerequisites** (recommended, see `scripts/start_xarm.sh`):
@@ -35,9 +35,12 @@ sudo systemctl stop teleop_robot
 bash scripts/start_body_control.sh          # another terminal, see Prerequisite · Environment Setup
 bash scripts/start_xarm.sh real
 
-# Run the demo (base ROS is already sourced; no need to source XARM)
+# Run the demo in a new terminal
+source /home/ubuntu/XARM/install/setup.bash
 python3 atom/demos/atom06_arm_moveit_endpose.py
 ```
+
+> ⚠ **High-frequency pitfall: instant `error_code=99999`** — MoveIt's joint limits are **tighter** than the URDF (e.g. `shoulder_yaw_l_joint`: MoveIt=±1.5 vs URDF=±2.96), while QP/teleop follow the wider URDF limits. **After a QP atom (atom07/08) or teleop, the arm often parks outside MoveIt's bounds → this atom gets instantly rejected with 99999** (signature: millisecond failure, QP atoms fine). Check: `tmux capture-pane -t xarm.1 -p -J -S -400 | grep -i 'outside bounds'` names the joint; fix: move it back via QP (see the 99999 row in Atom 5's troubleshooting table).
 
 What the demo does: read the current TCP pose → **keep the orientation, translate the end-effector up 5 cm** → return to the starting pose. Reversible and slow.
 
@@ -48,7 +51,7 @@ What the demo does: read the current TCP pose → **keep the orientation, transl
 | Interface | Type | Purpose |
 |---|---|---|
 | `/move_action` | `moveit_msgs/action/MoveGroup` (**Action**) | send an **end-effector pose constraint**; MoveIt solves IK, plans, executes |
-| `/EAIHardware/set_arm_enable` | `std_srvs/SetBool` (Service) | enable the arm in real mode (no such service in sim) |
+| `/moveit_controller_enable` (older builds: `/EAIHardware/set_arm_enable`) | `std_srvs/SetBool` (Service) | enable the arm in real mode; name varies by XARM version, demo auto-detects and falls through (no such service in sim) |
 | `/controller_manager/switch_controller` | ros2_control (Service) | activate `moveit_left_arm_controller` |
 | **`/tf`, `/tf_static`** | `tf2_msgs/TFMessage` (Topic) | **read the current TCP pose as the motion start** (atom05 uses `/joint_states`; here it's TF) |
 

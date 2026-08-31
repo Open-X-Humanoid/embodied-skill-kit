@@ -19,7 +19,7 @@
 ### 1.1 跑起来（前提比 atom04 重，务必按顺序）
 
 - **板子**：**x86、ubuntu 用户**（和 body_control 同板；XARM 装在 `/home/ubuntu/XARM`）。
-- ★**跑 demo 只需基础 ROS 2**（`/opt/ros/humble`，`~/.bashrc` 已自动 source）：demo 只 import 标准消息包（`moveit_msgs`、`controller_manager_msgs`、`std_srvs`、`sensor_msgs` 都在基础 ROS 里），**不需要 source XARM**。source XARM（`/home/ubuntu/XARM/install`，含 `tianyi2_bringup`）只用于**启动** XARM 本体+MoveIt，`start_xarm.sh` 已自动做；个别机器若 `import moveit_msgs` 失败再手动 `source /home/ubuntu/XARM/install/setup.bash`。
+- ★**每个运行 demo 的新终端都要 source XARM**：`source /home/ubuntu/XARM/install/setup.bash`。启动脚本只会在它创建的 tmux 窗格内 source，不会改变另开的 demo 终端。
 - **真机官方 SOP 共 5 步**（缺任一步臂不动）：起 body_control → 起 XARM 本体 → 起 MoveIt 组件 → **使能手臂** → **切 MoveIt 控制器** →（跑 demo 下发）。后两步 demo 已自动做。
 
 **一键前置**（推荐，见 `scripts/start_xarm.sh`）：
@@ -34,7 +34,8 @@ sudo systemctl stop teleop_robot
 bash scripts/start_body_control.sh          # 另开终端，见《前置 · 环境配置》
 bash scripts/start_xarm.sh real
 
-# 跑 demo（基础 ROS 已自动 source，直接跑；无需 source XARM）
+# 在新终端跑 demo
+source /home/ubuntu/XARM/install/setup.bash
 python3 atom/demos/atom05_arm_moveit.py
 ```
 

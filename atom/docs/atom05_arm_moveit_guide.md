@@ -19,7 +19,7 @@
 ### 1.1 Run it (heavier prerequisites than atom04 — follow the order)
 
 - **Board**: **x86, user ubuntu** (same board as body_control; XARM lives at `/home/ubuntu/XARM`).
-- ★**Running the demo needs only base ROS 2** (`/opt/ros/humble`, auto-sourced by `~/.bashrc`): the demo imports only standard message packages (`moveit_msgs`, `controller_manager_msgs`, `std_srvs`, `sensor_msgs` all live in base ROS), so **you don't need to source XARM**. Sourcing XARM (`/home/ubuntu/XARM/install`, with `tianyi2_bringup`) is only for **starting** the XARM body + MoveIt, which `start_xarm.sh` does; source it manually only if `import moveit_msgs` fails on your machine: `source /home/ubuntu/XARM/install/setup.bash`.
+- ★**Source XARM in every terminal that runs the demo**: `source /home/ubuntu/XARM/install/setup.bash`. The startup script sources XARM inside its tmux panes only; it does not modify a separately opened demo terminal.
 - **Real-robot SOP has 5 steps** (skip any → arm won't move): start body_control → start XARM body → start MoveIt component → **enable arm** → **switch to MoveIt controller** → (run the demo). The demo does the last two automatically.
 
 **One-click prerequisites** (recommended, see `scripts/start_xarm.sh`):
@@ -36,7 +36,8 @@ sudo systemctl stop teleop_robot
 bash scripts/start_body_control.sh          # another terminal, see Prerequisite · Environment Setup
 bash scripts/start_xarm.sh real
 
-# Run the demo (base ROS is already sourced; no need to source XARM)
+# Run the demo in a new terminal
+source /home/ubuntu/XARM/install/setup.bash
 python3 atom/demos/atom05_arm_moveit.py
 ```
 
