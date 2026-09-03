@@ -2,21 +2,21 @@
 
 **English** | [简体中文](README.zh-CN.md)
 
-Cross-stage helper scripts (shell, etc. — not tutorial code), kept separate from the teaching examples in `atom/demos/`: demos are "to learn from," scripts are "to use."
+Cross-stage helper scripts (shell, etc. — not tutorial code), kept separate from the teaching examples in `atom/<module>/`: demos are "to learn from," scripts are "to use."
 
 When adding a script, register a row below with its purpose and which machine / user it runs on.
 
 | Script | Purpose | Where to run |
 |---|---|---|
 | `start_body_control.sh` | One-click start of body_control (wraps the manual steps in *Prerequisite · Environment Setup* §2) | robot x86, user ubuntu |
-| `start_camera.sh` | One-click start of the Orbbec camera driver (prerequisite for perception atoms, e.g. atom25) | robot Orin, user nvidia |
-| `start_voice.sh` | One-click start of lyre voice (chat mode; prerequisite for voice atoms atom26~29) | robot Orin, user nvidia |
-| `start_xarm.sh` | One-click start of the XARM framework + MoveIt component (prerequisite for the arm-MoveIt atom, atom05) | robot x86, user ubuntu |
+| `start_camera.sh` | One-click start of the Orbbec camera driver (prerequisite for perception atoms, e.g. perception01) | robot Orin, user nvidia |
+| `start_voice.sh` | One-click start of lyre voice (chat mode; prerequisite for voice atoms interaction01~29) | robot Orin, user nvidia |
+| `start_xarm.sh` | One-click start of the XARM framework + MoveIt component (prerequisite for the arm-MoveIt atom, motion04) | robot x86, user ubuntu |
 | `stop_all.sh` | One-click cleanup: stop the sessions/processes started by these scripts (reset when things get messy) | the matching board (body/xarm on x86, camera/voice on Orin) |
 
 ## start_body_control.sh — one-click startup (quick path)
 
-A one-command wrapper around the manual steps in *Prerequisite · Environment Setup* §2 (`atom/docs/environment_setup.md`): tmux → sudo → source → `ros2 launch`. Use this to start fast; follow the manual steps when you want to understand each one — the two are equivalent and don't conflict.
+A one-command wrapper around the manual steps in *Prerequisite · Environment Setup* §2 (`docs/environment_setup.md`): tmux → sudo → source → `ros2 launch`. Use this to start fast; follow the manual steps when you want to understand each one — the two are equivalent and don't conflict.
 
 ```bash
 chmod +x scripts/start_body_control.sh   # make executable, first time only
@@ -41,11 +41,11 @@ chmod +x scripts/start_camera.sh    # make executable, first time only
 - Creates the `cam` tmux session, sources the Orbbec workspace, runs `ros2 launch orbbec_camera gemini_330_series.launch.py`, then drops you into the session.
 - Success = camera topics start publishing; verify in another terminal with `ros2 topic list | grep camera`.
 - Detach with `Ctrl+B` then `D`; if it's already running it just attaches; if it can't find the driver workspace, set `ORBBEC_WS` at the top of the script.
-- The atom25 camera demo can then run on the Orin locally, or on the x86 (same ROS graph, matching `ROS_DOMAIN_ID`).
+- The perception01 camera demo can then run on the Orin locally, or on the x86 (same ROS graph, matching `ROS_DOMAIN_ID`).
 
 ## start_voice.sh — one-click voice startup (chat mode)
 
-Starts the lyre voice service (chat mode; TTS/playback, etc.). Prerequisite in *Prerequisite · Environment Setup* (`atom/docs/environment_setup.md`); usage details in the output-side voice guide (`atom/docs/atom26-27_voice_output_guide.md`). Runs on the **Orin** (user `nvidia`).
+Starts the lyre voice service (chat mode; TTS/playback, etc.). Prerequisite in *Prerequisite · Environment Setup* (`docs/environment_setup.md`); usage details in the output-side voice guide (`atom/interaction/docs/interaction01-02_voice_output_guide.md`). Runs on the **Orin** (user `nvidia`).
 
 ```bash
 chmod +x scripts/start_voice.sh   # make executable, first time only
@@ -59,7 +59,7 @@ chmod +x scripts/start_voice.sh   # make executable, first time only
 
 ## start_xarm.sh — one-click XARM + MoveIt startup
 
-Starts the XARM framework body + MoveIt component (a two-pane tmux session); prerequisite for the arm-MoveIt atom (atom05). The real mode is verified on the TianYi 2.0 robot.
+Starts the XARM framework body + MoveIt component (a two-pane tmux session); prerequisite for the arm-MoveIt atom (motion04). The real mode is verified on the TianYi 2.0 robot.
 
 ```bash
 chmod +x scripts/start_xarm.sh
@@ -81,5 +81,5 @@ Stops all sessions/processes started by these scripts (`xarm`/`body`/`cam`/`voic
 bash scripts/stop_all.sh    # on the matching board; killing body_control (root) uses sudo (may prompt)
 ```
 
-- Then restart in the right order: **body_control first, then XARM/MoveIt** (see the full flow or the atom05 guide).
+- Then restart in the right order: **body_control first, then XARM/MoveIt** (see the full flow or the motion04 guide).
 - ⚠ Commands are written for the common case; process names/paths depend on your robot.

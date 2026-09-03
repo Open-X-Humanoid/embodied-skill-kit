@@ -13,7 +13,7 @@
 | Shared tunable configuration | `skill/skill01_finger_tap/config.py` |
 | Demo assets | `skill/skill01_finger_tap/assets/` |
 
-The Skill uses transparent ROS 2 interfaces directly. Atom 05–08 explain the individual MoveIt/QP arm controllers; this guide focuses on coordinating perception, arm motion, and the dexterous hand. Read [Atom 6 · MoveIt End Pose](../../../atom/docs/atom06_arm_moveit_endpose_guide.md) and [Atom 8 · QP End Pose](../../../atom/docs/atom08_arm_qp_endpose_guide.md) first if those controllers are unfamiliar.
+The Skill uses transparent ROS 2 interfaces directly. Motion 4–08 explain the individual MoveIt/QP arm controllers; this guide focuses on coordinating perception, arm motion, and the dexterous hand. Read [Motion 5 · MoveIt End Pose](../../../atom/motion/docs/motion05_arm_moveit_endpose_guide.md) and [Motion 7 · QP End Pose](../../../atom/motion/docs/motion07_arm_qp_endpose_guide.md) first if those controllers are unfamiliar.
 
 ## 1. Quick start
 
@@ -28,7 +28,7 @@ bash scripts/start_camera.sh
 python3 skill/skill01_finger_tap/tag_locator.py
 ```
 
-> ⚠ **The camera topic namespace is detected automatically; normally you need do nothing** (details in section 4 of the Prerequisite · Environment Setup guide, `atom/docs/environment_setup.md`). It varies by robot, is detected from the ROS graph at startup, and is printed in the log; use `export CAMERA_NS=<namespace>` only for multi-camera robots or to force a specific one. However, **if the driver already starts automatically at boot, skip `start_camera.sh` above** or a second driver will fight for the USB device.
+> ⚠ **The camera topic namespace is detected automatically; normally you need do nothing** (details in section 4 of the Prerequisite · Environment Setup guide, `docs/environment_setup.md`). It varies by robot, is detected from the ROS graph at startup, and is printed in the log; use `export CAMERA_NS=<namespace>` only for multi-camera robots or to force a specific one. However, **if the driver already starts automatically at boot, skip `start_camera.sh` above** or a second driver will fight for the USB device.
 
 `tag_locator.py` is perception-only. It detects the card, estimates its center and normal, and publishes `/skill01/target_point`. Inspect the topic before enabling arm motion.
 

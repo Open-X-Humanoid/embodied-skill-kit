@@ -16,11 +16,11 @@ Content grows through three stages — from isolated control primitives, to reus
 
 ## Quick Start
 
-The fastest way in is to **start from the guides** — every stage's `docs/` folder holds self-contained walkthroughs you can read without the real robot; if you're new, begin with stage ① Atom (`atom/docs/`). The docs are the tutorial itself; the code is the subject they explain.
+The fastest way in is to **start from the guides** — every stage's `docs/` folder holds self-contained walkthroughs you can read without the real robot; if you're new, begin with stage ① Atom — each module has its own README (`atom/motion/`, `atom/perception/`, `atom/interaction/`). The docs are the tutorial itself; the code is the subject they explain.
 
 When you're ready to run on the real robot:
 
-1. **Set up the environment & start body_control**: see *Prerequisite · Environment Setup* (`atom/docs/environment_setup.md`). Motion atoms need body_control running first; one-click start:
+1. **Set up the environment & start body_control**: see *Prerequisite · Environment Setup* (`docs/environment_setup.md`). Motion atoms need body_control running first; one-click start:
 
    ```bash
    ./scripts/start_body_control.sh        # run on the robot's x86 board, as user ubuntu
@@ -30,7 +30,7 @@ When you're ready to run on the real robot:
 
    ```bash
    source /home/ubuntu/ros2ws/install/setup.bash
-   python3 atom/demos/atom01_head_ros2.py
+   python3 atom/motion/motion01_head_ros2.py
    ```
 
 3. Read the matching guide `atomNN_..._guide.md` to understand the code, then tweak-and-observe.
@@ -42,10 +42,12 @@ Then explore [Skill 2 · Bottle Grasp](skill/skill02_bottle_grasp/docs/skill02_b
 ## Repository Layout
 
 ```
+docs/         prerequisites shared by every stage (environment setup, frames, conventions)
 atom/
-  demos/     example code (atomNN_<part>_<variant>.py; _robust = production version)
-  docs/      guides — English `name.md` (default), Chinese `name_zh-CN.md`
-  assets/    demo videos / rosbag recordings
+  motion/      joint & chassis control  — code at root, docs/, assets/
+  perception/  camera, force, power, TF
+  interaction/ voice in & out
+               (each module: README.md + code at root + docs/ + assets/)
 skill/
   skill01_finger_tap/   AprilTag perception + QP arm control for one complete tap
   skill02_bottle_grasp/ bottle/box perception + MoveIt/QP control for grasp and placement

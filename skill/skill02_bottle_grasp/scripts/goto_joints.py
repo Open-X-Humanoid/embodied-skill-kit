@@ -19,7 +19,7 @@ skill02_bottle_grasp/scripts · 手臂关节角三合一：看 / 录 / 走
   位姿，不用过 IK 反解，保留了「不会拧麻花」这个关节空间移动的优点。与 grasp_bottle.py
   的 goto_ready() 同一条路径、同一套限速。
   ⚠代价：要过 MoveIt 更紧的关节限位表检查（QP 对此免疫）。报 error_code=99999 时首先怀疑
-  【起点越界】——当前某个关节已在 MoveIt 限位之外，而不是目标够不到。见 atom05 guide 排错表。
+  【起点越界】——当前某个关节已在 MoveIt 限位之外，而不是目标够不到。见 motion04 guide 排错表。
 
 用法（x86，ubuntu 用户；本终端须已 source XARM）
   source /home/ubuntu/XARM/install/setup.bash
@@ -29,7 +29,7 @@ skill02_bottle_grasp/scripts · 手臂关节角三合一：看 / 录 / 走
   例（config 里的 READY_JOINTS）：
     python3 .../goto_joints.py 0.2 0.065 0.157 -0.373 0.005 0.089 -0.135
 
-拖动示教配合 --watch（切重力补偿那几条服务调用见 atom05/atom08 guide）：
+拖动示教配合 --watch（切重力补偿那几条服务调用见 motion04/motion07 guide）：
   ⚠ 切重力补偿的瞬间手臂会变软，必须【扶稳】；手里抓着重物时尤其危险（重力补偿只补偿
     手臂自重、不补偿负载），录姿态前先把负载取下来。
 
@@ -202,7 +202,7 @@ class GotoJoints(Node):
         self.get_logger().error(
             f"MoveIt 关节目标失败 error_code={code}"
             "（99999 首查【起点越界】：当前某关节已在 MoveIt 限位外，先用 QP 挪回去再试；"
-            "见 atom05 guide 排错表）")
+            "见 motion04 guide 排错表）")
         return False
 
 

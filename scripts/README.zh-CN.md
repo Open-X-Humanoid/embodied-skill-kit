@@ -2,21 +2,21 @@
 
 [English](README.md) | **简体中文**
 
-放**跨阶段的辅助脚本**（shell 等非示例代码），与教学示例 `atom/demos/` 分开：demos 是「拿来学」的，scripts 是「拿来用」的。
+放**跨阶段的辅助脚本**（shell 等非示例代码），与教学示例 `atom/<模块>/` 分开：demos 是「拿来学」的，scripts 是「拿来用」的。
 
 新增脚本时在下表登记一行，写清用途、在哪台机器 / 哪个用户上跑。
 
 | 脚本 | 用途 | 在哪跑 |
 |---|---|---|
 | `start_body_control.sh` | 一键启动 body_control（封装《前置 · 环境配置》第 2 节手动步骤） | 机器人 x86，ubuntu 用户 |
-| `start_camera.sh` | 一键启动 Orbbec 相机驱动（感知类原子如 atom25 的前置） | 机器人 Orin，nvidia 用户 |
-| `start_voice.sh` | 一键启动 lyre 语音（chat 模式，语音原子 atom26~29 的前置） | 机器人 Orin，nvidia 用户 |
-| `start_xarm.sh` | 一键启动 XARM 框架 + MoveIt 组件（手臂 MoveIt 原子 atom05 的前置） | 机器人 x86，ubuntu 用户 |
+| `start_camera.sh` | 一键启动 Orbbec 相机驱动（感知类原子如 perception01 的前置） | 机器人 Orin，nvidia 用户 |
+| `start_voice.sh` | 一键启动 lyre 语音（chat 模式，语音原子 interaction01~29 的前置） | 机器人 Orin，nvidia 用户 |
+| `start_xarm.sh` | 一键启动 XARM 框架 + MoveIt 组件（手臂 MoveIt 原子 motion04 的前置） | 机器人 x86，ubuntu 用户 |
 | `stop_all.sh` | 一键清场：停掉本仓库脚本启动的会话/进程（"系统乱了"时重来） | 对应板子（body/xarm 在 x86，camera/voice 在 Orin） |
 
 ## start_body_control.sh —— 一键启动（快速版）
 
-《前置 · 环境配置》第 2 节手动步骤（tmux → sudo → source → `ros2 launch`）的一键封装，见 `atom/docs/environment_setup_zh-CN.md`。想快就用它；想搞清每一步在做什么，就照手动版来——两者等价、不冲突。
+《前置 · 环境配置》第 2 节手动步骤（tmux → sudo → source → `ros2 launch`）的一键封装，见 `docs/environment_setup_zh-CN.md`。想快就用它；想搞清每一步在做什么，就照手动版来——两者等价、不冲突。
 
 ```bash
 chmod +x scripts/start_body_control.sh   # 首次赋可执行权限（只需一次）
@@ -41,11 +41,11 @@ chmod +x scripts/start_camera.sh    # 首次赋可执行权限（只需一次）
 - 自动建 `cam` tmux 会话、source Orbbec workspace、执行 `ros2 launch orbbec_camera gemini_330_series.launch.py`，并带你进会话。
 - 相机话题开始发布即成功；另开终端验证：`ros2 topic list | grep camera`。
 - 保持运行并退出界面：`Ctrl+B` 然后 `D`；已在运行则直接进入；若找不到驱动 workspace，改脚本顶部的 `ORBBEC_WS`。
-- 起来后 atom25 相机 demo 可在 Orin 本地跑，也可在 x86 跑（同一 ROS 图，需同 `ROS_DOMAIN_ID`）。
+- 起来后 perception01 相机 demo 可在 Orin 本地跑，也可在 x86 跑（同一 ROS 图，需同 `ROS_DOMAIN_ID`）。
 
 ## start_voice.sh —— 一键启动语音（chat 模式）
 
-启动 lyre 语音服务（chat 模式，含朗读/播放等）。前置见《前置 · 环境配置》(`atom/docs/environment_setup_zh-CN.md`)，用法细节见《语音·输出侧》guide（`atom/docs/atom26-27_voice_output_guide_zh-CN.md`）。跑在 **Orin**（`nvidia` 用户）。
+启动 lyre 语音服务（chat 模式，含朗读/播放等）。前置见《前置 · 环境配置》(`docs/environment_setup_zh-CN.md`)，用法细节见《语音·输出侧》guide（`atom/interaction/docs/interaction01-02_voice_output_guide_zh-CN.md`）。跑在 **Orin**（`nvidia` 用户）。
 
 ```bash
 chmod +x scripts/start_voice.sh   # 首次赋可执行权限（只需一次）
@@ -59,7 +59,7 @@ chmod +x scripts/start_voice.sh   # 首次赋可执行权限（只需一次）
 
 ## start_xarm.sh —— 一键启动 XARM + MoveIt（快速版）
 
-启动 XARM 框架本体 + MoveIt 组件（tmux 两窗格），是手臂 MoveIt 原子（atom05）的前置。real 模式已在天轶2.0真机跑通。
+启动 XARM 框架本体 + MoveIt 组件（tmux 两窗格），是手臂 MoveIt 原子（motion04）的前置。real 模式已在天轶2.0真机跑通。
 
 ```bash
 chmod +x scripts/start_xarm.sh
@@ -81,5 +81,5 @@ source scripts/start_xarm.sh       # 每个运行手臂 demo 或 Skill 的新终
 bash scripts/stop_all.sh    # 在对应板子上跑；body_control 是 root 起的，杀它会用 sudo（可能要密码）
 ```
 
-- 之后按正确顺序重启：**先 body_control，再 XARM/MoveIt**（见下方「完整流程」或 atom05 guide）。
+- 之后按正确顺序重启：**先 body_control，再 XARM/MoveIt**（见下方「完整流程」或 motion04 guide）。
 - ⚠ 命令按常规写，进程名/路径以你机器人为准。

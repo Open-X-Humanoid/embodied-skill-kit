@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 一键启动 lyre 语音（chat 模式）—— 语音原子（atom26~29）的前置。
+# 一键启动 lyre 语音（chat 模式）—— 语音原子（interaction01~29）的前置。
 #
 # 两种用法，跑完都能直接跑 demo：
 #   1) bash   scripts/start_voice.sh   → 确保 lyre 在跑，并把你丢进一个"已 source 环境"的新 shell
@@ -67,7 +67,7 @@ fi
 # 2) 把你送进一个"已 source 环境"的交互 shell —— 直接就能跑 demo；用完 exit 退回原终端
 echo "--------------------------------------------------"
 echo "[就绪] 已打开一个 source 好环境的新 shell，直接跑，例如："
-echo "         python3 atom/demos/atom26_voice_tts_ros2.py"
+echo "         python3 atom/interaction/interaction01_voice_tts_ros2.py"
 echo "       用完输入 exit 退回原来的终端。"
 echo "--------------------------------------------------"
 exec bash --rcfile <(echo "[ -f ~/.bashrc ] && source ~/.bashrc; source '$SETUP'")

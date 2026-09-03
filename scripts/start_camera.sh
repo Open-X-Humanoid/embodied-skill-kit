@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# 一键启动 Orbbec 相机驱动 —— 感知类原子（如 atom25 相机）的前置。
+# 一键启动 Orbbec 相机驱动 —— 感知类原子（如 perception01 相机）的前置。
 # 用法：在机器人 Orin 上执行  ./scripts/start_camera.sh
 #
 # ⚠ 相机驱动跑在 Orin（用户 nvidia），不是 x86；不需要 body_control、不需要 root。
-#   起来后 atom25 相机 demo 可在 Orin 本地跑，也可在 x86 跑（同一 ROS 图，需同 ROS_DOMAIN_ID）。
+#   起来后 perception01 相机 demo 可在 Orin 本地跑，也可在 x86 跑（同一 ROS 图，需同 ROS_DOMAIN_ID）。
 
 set -u
 

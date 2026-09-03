@@ -16,11 +16,11 @@
 
 ## 快速开始
 
-最快的入门方式是**从讲解文档读起**——每个阶段目录下的 `docs/` 都是独立成篇的 guide，不接真机也能看懂；新手从 ① 原子 `atom/docs/` 起步。**文档是教程主线，代码是讲解的对象。**
+最快的入门方式是**从讲解文档读起**——每个阶段目录下的 `docs/` 都是独立成篇的 guide，不接真机也能看懂；新手从 ① 原子起步，每个模块自带 README（`atom/motion/`、`atom/perception/`、`atom/interaction/`）。**文档是教程主线，代码是讲解的对象。**
 
 要在真机上跑，按三步：
 
-1. **配环境 + 启动 body_control**：见《前置 · 环境配置》(`atom/docs/environment_setup_zh-CN.md`)。运动类原子需先起 body_control，可一键启动：
+1. **配环境 + 启动 body_control**：见《前置 · 环境配置》(`docs/environment_setup_zh-CN.md`)。运动类原子需先起 body_control，可一键启动：
 
    ```bash
    ./scripts/start_body_control.sh        # 在机器人 x86 上、ubuntu 用户执行
@@ -30,7 +30,7 @@
 
    ```bash
    source /home/ubuntu/ros2ws/install/setup.bash
-   python3 atom/demos/atom01_head_ros2.py
+   python3 atom/motion/motion01_head_ros2.py
    ```
 
 3. 对照同名文档《atomNN_..._guide.md》理解代码、改一改看变化。
@@ -42,10 +42,12 @@
 ## 仓库结构
 
 ```
+docs/         跨阶段前置（环境配置、坐标系、约定）
 atom/
-  demos/     示例代码（atomNN_<部位>_<变体>.py，_robust 为生产版）
-  docs/      讲解文档 — 英文 `name.md`（默认），中文 `name_zh-CN.md`
-  assets/    演示视频 / rosbag 录制
+  motion/      关节与底盘控制   — 代码在根 + docs/ + assets/
+  perception/  相机、力觉、电量、TF
+  interaction/ 语音输入输出
+               （每个模块：README.md + 代码在根 + docs/ + assets/）
 skill/
   skill01_finger_tap/   AprilTag 感知 + QP 手臂控制，完成一次完整点按
   skill02_bottle_grasp/ 瓶子/箱子感知 + MoveIt/QP 控制，完成抓取与放置

@@ -27,12 +27,12 @@
   想看控制器切换/逐段路点/内部数学等细节：跑时加 --ros-args --log-level debug
 
 双后端（config.ARM_BACKEND 一行切换）
-  "qp"    （对照用）QP 末端控制器分段小步喂（atom08 已验证套路）。QP 是局部跟踪，
+  "qp"    （对照用）QP 末端控制器分段小步喂（motion07 已验证套路）。QP 是局部跟踪，
            目标离当前太远会被拒（dis_err_bound），故拆成 ≤QP_STEP(4cm) 的路点依次下发。
-  "moveit"（当前默认）MoveIt 一步规划（atom06 套路）。99999 的【已实锤】主因：MoveIt 限位表比 URDF 紧
+  "moveit"（当前默认）MoveIt 一步规划（motion05 套路）。99999 的【已实锤】主因：MoveIt 限位表比 URDF 紧
            （如 shoulder_yaw_l MoveIt=±1.5、URDF/QP=±2.96），QP/遥控把关节停在 MoveIt 界外
            → 起点非法秒拒（xarm.1 日志 grep 'outside bounds' 点名关节，用 QP 挪回即恢复，
-           atom05 guide 排错表有完整处置）。此外姿态过约束也会 99999（放宽 ori_tol 可辨）。
+           motion04 guide 排错表有完整处置）。此外姿态过约束也会 99999（放宽 ori_tol 可辨）。
            SRDF 碰撞矩阵不同步为未证实假设（已报 XARM 团队）。排除起点越界后本后端可用。
 
 两段法（qp 后端；杜绝"保持垂臂手腕朝向跨大范围 → 臂/手扭曲"）
@@ -40,7 +40,7 @@
           每关节直插目标角、不经 IK，不会拧麻花；且 QP 碰撞球不含手，预备位由人确认安全。
   第二段  末端空间(endpose QP) 分段接近：只走最后 20~30cm，姿态=预备位自身朝向，手腕几乎不动。
   ★录制 READY_JOINTS：用 jointspace action 增量把臂调到"手朝卡片方向、离卡 20~30cm、
-    姿态自然"的位置 → 跑 atom05 抄它打印的『当前左臂角』（按名字序，即 J1..J7）→ 填入 config。
+    姿态自然"的位置 → 跑 motion04 抄它打印的『当前左臂角』（按名字序，即 J1..J7）→ 填入 config。
 
 一次快照语义（安全设计）
   启动时取一次目标点后不再更新——绝不追踪移动目标。执行中挪卡片，手臂仍去原定点。
@@ -71,12 +71,12 @@
 
 接口
   Sub  /skill01/target_point   geometry_msgs/PoseStamped    目标点（position=中心, orientation.z轴=法线; frame=head_roll_link）
-  Pub  /inspire_hand/ctrl/left_hand  sensor_msgs/JointState     摆点按手型（食指伸直其余蜷起，见 atom03）
+  Pub  /inspire_hand/ctrl/left_hand  sensor_msgs/JointState     摆点按手型（食指伸直其余蜷起，见 motion09）
   TF   base ← head_roll_link / base ← left_tcp_link            目标变换 / 读末端起点
-  qp后端     Action /endpose_single_arm_qp_L_controller/endPosSingleTarget（atom08 同款）
+  qp后端     Action /endpose_single_arm_qp_L_controller/endPosSingleTarget（motion07 同款）
              Service .../set_parameters                          设 vel_limits 慢速
-  moveit后端 Action /move_action（atom06 同款）
-  Service 使能（候选自动探测）+ switch/list_controllers          同 atom06/08 已验证套路
+  moveit后端 Action /move_action（motion05 同款）
+  Service 使能（候选自动探测）+ switch/list_controllers          同 motion05/08 已验证套路
 """
 
 import sys
@@ -492,7 +492,7 @@ class FingerTap(Node):
                 self.get_logger().error(f"超时未读到 {C.EE_LINK} 位姿（TF）")
                 return None
 
-    # ── qp 后端：单段下发（atom08 同款）+ 分段接近 ──────────────────
+    # ── qp 后端：单段下发（motion07 同款）+ 分段接近 ──────────────────
     def qp_move_once(self, pose, quiet=False):
         """把一个末端位姿发给 QP 控制器（阻塞等结果）。段间距离须 ≤ dis_err_bound。
         quiet=True（点按用）：失败降为 info——触卡面推不动而超时是预期，不当报错。"""
@@ -700,7 +700,7 @@ class FingerTap(Node):
         except Exception as e:
             self.get_logger().warn(f"出发位姿落盘失败（不影响本次执行，只影响 --recover）：{e}")
 
-    # ── moveit 后端：一步规划（atom06 同款；XARM 修复 99999 后可用）──
+    # ── moveit 后端：一步规划（motion05 同款；XARM 修复 99999 后可用）──
     def _pose_goal(self, pose, pos_tol=0.01, ori_tol=0.05, ori_tol_z=None):
         """位置球约束 + 逐轴姿态约束。ori_tol_z 单独放开 z 轴（绕指向轴的自旋）——
         点按任务只要求指尖方向对准卡面（x/y 紧），绕指向轴转多少无所谓（z 松），
@@ -758,7 +758,7 @@ class FingerTap(Node):
             return True
         self.get_logger().error(
             f"MoveIt 失败 error_code={code}（99999 首查起点越界：tmux capture-pane -t xarm.1 -p -J -S -400"
-            f" | grep -i 'outside bounds' 点名关节后用 QP 挪回，见 atom05 guide 排错表；其次查姿态过约束）")
+            f" | grep -i 'outside bounds' 点名关节后用 QP 挪回，见 motion04 guide 排错表；其次查姿态过约束）")
         return False
 
 

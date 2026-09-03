@@ -45,7 +45,7 @@ PRESS_DEPTH = 0.015               # 过冲深度：指肚触卡面后再进 1.5c
 # ── 点按手型（skill 的"手+臂协调"：抬臂前先摆手型）──
 # 只伸食指（+拇指）点按、其余三指蜷起：① 抬臂/接近时其它手指不再蹭到卡片所在的板面
 # ② 食指成唯一凸出点，指尖补偿(PAD_LOCAL_OFFSET)更干净、更像人"用食指点"的姿势。
-# 用因时 Inspire 手接口（见 atom/demos/atom03_hand_ros2.py）：position=张合百分比，
+# 用因时 Inspire 手接口（见 atom/motion/motion09_hand_ros2.py）：position=张合百分比，
 # 1.0=完全张开/伸直，0.0=握紧；手指ID "1"小指 "2"无名 "3"中 "4"食 "5"拇弯 "6"拇旋。
 # ★食指须保持伸直(4=1.0)：URDF 里手指是 fixed 关节，left_index_2 的 TF 按"伸直"算，
 #   PAD_LOCAL_OFFSET 也是在伸直姿态的网格上标定的——食指蜷了补偿就失准。蜷其余指不影响
@@ -63,11 +63,11 @@ POINT_POSE = {"1": 0.2, "2": 0.2, "3": 0.2, "4": 1.0, "5": 1.0, "6": 1.0}
 # SAFE_BOX = {"x": (0.25, 0.95), "y": (-0.7, 0.7), "z": (0.7, 1.6)}
 SAFE_BOX = None
 
-# 手臂后端："moveit"=MoveIt 一步规划（atom06 套路，真机已验证，默认）；"qp"=QP 末端分段喂
-# （atom08 套路，留作对照——⚠长距扫掠会把手拖着撞身体：QP 碰撞模型不含灵巧手，实测在
+# 手臂后端："moveit"=MoveIt 一步规划（motion05 套路，真机已验证，默认）；"qp"=QP 末端分段喂
+# （motion07 套路，留作对照——⚠长距扫掠会把手拖着撞身体：QP 碰撞模型不含灵巧手，实测在
 # 垂臂 READY 下 24 段长扫第 9 段卡手超时；短程（如到位修正 2~3cm）是它的舒适区）。
 # moveit 报 99999 的主因已实锤=起点越界（MoveIt 限位比 URDF 紧，QP/遥控跑完常触发；
-# xarm.1 日志 grep 'outside bounds' 点名关节、QP 挪回即恢复，见 atom05 guide 排错表 99999 行）
+# xarm.1 日志 grep 'outside bounds' 点名关节、QP 挪回即恢复，见 motion04 guide 排错表 99999 行）
 ARM_BACKEND = "moveit"
 QP_CONTROLLER = "endpose_single_arm_qp_L_controller"
 JOINTSPACE_CONTROLLER = "jointspace_arm_L_controller"
@@ -142,7 +142,7 @@ AIM_BIAS_BASE = [0.0, 0.005, 0.005]  # 冻结目标实测：y=0.02 时落点稳�
 # 的安全预备姿态，并按 finger_tap.py 文件头说明记录关节角。
 READY_JOINTS = [-0.0533, 0.1279, -0.0492, -0.0651, 0.7732, -0.0382, -0.0278]
 
-# 手臂（MoveIt 末端，同 atom06 已验证参数）
+# 手臂（MoveIt 末端，同 motion05 已验证参数）
 GROUP = "left_arm"
 EE_LINK = "left_tcp_link"
 MOVEIT_CONTROLLER = "moveit_left_arm_controller"

@@ -12,7 +12,7 @@
 | 配置常量（调参只改这里） | `skill/skill02_bottle_grasp/config.py` |
 | 诊断工具（箱子检测可视化） | `skill/skill02_bottle_grasp/debug_box_overlay.py` |
 
-> 本技能承接技能1的协调模式（感知+手臂+灵巧手拧成一个动作），但感知和抓握几何完全不同：技能1的目标是固定 AprilTag，本技能的目标是无标记的真实物体（矿泉水瓶），且瓶子旋转对称、姿态不需要跟随目标计算。手臂控制器仍是原子层 atom05~08 讲过的 MoveIt/QP，本文同样只讲怎么把它们协调起来，不重复展开单个控制器。
+> 本技能承接技能1的协调模式（感知+手臂+灵巧手拧成一个动作），但感知和抓握几何完全不同：技能1的目标是固定 AprilTag，本技能的目标是无标记的真实物体（矿泉水瓶），且瓶子旋转对称、姿态不需要跟随目标计算。手臂控制器仍是原子层 motion04~08 讲过的 MoveIt/QP，本文同样只讲怎么把它们协调起来，不重复展开单个控制器。
 
 ## 1. 速览（点进来先看这块）
 
@@ -38,7 +38,7 @@ python3 skill/skill02_bottle_grasp/bottle_locator.py             # 终端A：检
 python3 skill/skill02_bottle_grasp/box_locator.py                # 终端B：借瓶子种子高度测箱子
 ```
 
-> ⚠ **相机话题名会自动探测，一般不用管**（细节见《前置 · 环境配置》第 4 节，`atom/docs/environment_setup_zh-CN.md`）：命名空间因机器而异，启动时扫 ROS 图自动认出、日志里会打印；多相机或想强制指定才 `export CAMERA_NS=<命名空间>`。但**相机若已由出厂服务自启，要跳过上面的 `start_camera.sh`**，否则会起第二个驱动抢 USB。
+> ⚠ **相机话题名会自动探测，一般不用管**（细节见《前置 · 环境配置》第 4 节，`docs/environment_setup_zh-CN.md`）：命名空间因机器而异，启动时扫 ROS 图自动认出、日志里会打印；多相机或想强制指定才 `export CAMERA_NS=<命名空间>`。但**相机若已由出厂服务自启，要跳过上面的 `start_camera.sh`**，否则会起第二个驱动抢 USB。
 
 两个感知节点都只做「看」，不发任何运动指令，可以先单独跑、拿 `ros2 topic echo` 核对数值是否合理。`box_locator.py` 依赖 `bottle_locator.py` 已经在发布箱顶高度这个种子值，必须先起 `bottle_locator.py`。
 
@@ -224,7 +224,7 @@ MoveIt 独自做不到「姿态精确复现」，QP 独自做不到「大范围�
 |---|---|
 | 超时未收到瓶子目标 | Orin 上 `bottle_locator.py` 没跑 / 瓶子不在视野 / 两板 `ROS_DOMAIN_ID` 不一致 |
 | 超时未收到箱子数据 | `box_locator.py` 没跑，或它还没收到 `bottle_locator.py` 的种子高度；此时安全中间点算不出来，接近/撤回会跳过这层保护直接走单段路线，务必留意日志警告 |
-| `error_code=99999`（MoveIt 阶段秒失败） | 同技能1/atom05：多半是起点越界或过约束，参考 atom05 guide 排错表 |
+| `error_code=99999`（MoveIt 阶段秒失败） | 同技能1/motion04：多半是起点越界或过约束，参考 motion04 guide 排错表 |
 | 中间点/停驻点确认时发现手臂离箱子很近 | 立刻 Ctrl-C，跑 `--recover` 收臂；检查 `INTERMEDIATE_Y_MARGIN`/`BOX_XY_MARGIN` 是否需要调大，或箱子检测本身是否准确（用 `debug_box_overlay.py` 核对） |
 | 抓握后提起发现瓶子滑落/被压瘪 | 停止测试，由合格人员重新标定并验证 `HAND_GRASP_POSE` |
 | 臂停在半空（段失败/Ctrl-C/崩溃） | `python3 skill/skill02_bottle_grasp/grasp_bottle.py --recover`，按落盘出发位 QP 慢速原路退回、再关节归位 |

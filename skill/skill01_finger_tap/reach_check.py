@@ -7,7 +7,7 @@ skill01 · reach_check —— MoveIt 可达性预检（只规划、不执行；�
   和 finger_tap 用同一套目标获取逻辑（收 tag → 中位数 → TF 到 base → SAFE_BOX →
   接近点=卡片中心沿法线退 APPROACH_OFFSET + 感知姿态），把同一个目标位姿交给 MoveIt
   用 plan_only=True 纯规划：规划成功 = moveit 后端可达；并打印轨迹末点 7 关节角
-  （可直接抄进 atom05 的目标做慢速实跑验证）。
+  （可直接抄进 motion04 的目标做慢速实跑验证）。
 
 判读（三档姿态约束依次规划；实测 2026-07-24：严格档 99999、全松档给贴限位扭曲解，★档为正解）
   ①严格（xyz 全 ±0.05）      过 → 姿态毫无问题
@@ -16,7 +16,7 @@ skill01 · reach_check —— MoveIt 可达性预检（只规划、不执行；�
   ③全松（xyz=3.14）           过 → 仅位置可达；只有③过=姿态约束仍太紧，需调 HAND_SPIN
   三档全败 → 首查起点越界（99999 高频坑）：
        tmux capture-pane -t xarm.1 -p -J -S -400 | grep -i 'outside bounds'
-     点名关节后用 QP 挪回（见 atom05 guide 排错表）；无越界则目标真够不着/有碰撞。
+     点名关节后用 QP 挪回（见 motion04 guide 排错表）；无越界则目标真够不着/有碰撞。
   ★每档成功都打印轨迹末点 7 关节角，并对照 URDF 软限位标记贴限位的关节（|余量|<0.1rad ⚠）。
 
 跑在哪（x86；前提：Orin 的 tag_locator 在跑、XARM 本体+MoveIt 组件在跑）
@@ -35,13 +35,13 @@ from finger_tap import FingerTap, MOVE_ACTION   # 复用：收目标/TF/安全�
 from moveit_msgs.action import MoveGroup
 from moveit_msgs.msg import MotionPlanRequest, PlanningOptions
 
-# 轨迹末点按此顺序打印（= atom05 JOINT_NAMES 顺序，可直接抄作它的目标）
+# 轨迹末点按此顺序打印（= motion04 JOINT_NAMES 顺序，可直接抄作它的目标）
 JOINT_ORDER = [
     "shoulder_pitch_l_joint", "shoulder_roll_l_joint", "shoulder_yaw_l_joint",
     "elbow_pitch_l_joint", "elbow_yaw_l_joint", "wrist_pitch_l_joint", "wrist_roll_l_joint",
 ]
 
-# 左臂 URDF 软限位（同 atom04_robust 表；用于标记"贴限位的扭曲解"）
+# 左臂 URDF 软限位（同 motion03_robust 表；用于标记"贴限位的扭曲解"）
 URDF_LIMITS = {
     "shoulder_pitch_l_joint": (-2.96, 2.96), "shoulder_roll_l_joint": (-0.26, 2.61),
     "shoulder_yaw_l_joint": (-2.96, 2.96),   "elbow_pitch_l_joint": (-2.61, 0.26),
@@ -51,7 +51,7 @@ URDF_LIMITS = {
 
 
 def fmt_joints(joints):
-    """按 atom05 顺序格式化关节角；贴限位（余量<0.1rad）的标 ⚠。"""
+    """按 motion04 顺序格式化关节角；贴限位（余量<0.1rad）的标 ⚠。"""
     out = []
     for name in JOINT_ORDER:
         v = joints[name]
@@ -130,7 +130,7 @@ def main():
         if code2 == 1:
             log.info(f"②★方向紧自旋适度（xy=0.3, z={C.SPIN_TOL}，绕 HAND_SPIN 名义值）：✓ 过 —— "
                      "finger_tap moveit 后端同款约束，可直接切 ARM_BACKEND=\"moveit\" 实跑")
-            log.info(f"   末点关节角（可抄去 atom05 慢速实跑验证）: {fmt_joints(j2)}")
+            log.info(f"   末点关节角（可抄去 motion04 慢速实跑验证）: {fmt_joints(j2)}")
             return
         log.warn(f"②★方向紧自旋松：✗ error_code={code2}")
 
@@ -144,7 +144,7 @@ def main():
             f"✗ 三档全败（严格={code1} / ★={code2} / 全松={code3}）。按序排查：\n"
             "  ① 起点越界（99999 高频坑）："
             "tmux capture-pane -t xarm.1 -p -J -S -400 | grep -i 'outside bounds'\n"
-            "     有点名关节 → 用 QP 挪回（atom05 guide 排错表 99999 行）后重跑本工具\n"
+            "     有点名关节 → 用 QP 挪回（motion04 guide 排错表 99999 行）后重跑本工具\n"
             "  ② 无越界 → 目标真够不着/有碰撞：挪近卡片或调整预备姿态")
     except KeyboardInterrupt:
         log.warn("用户中断")

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 一键启动 body_control —— 封装《前置 · 环境配置》(atom/docs/前置_环境配置.md) 第 2 节的手动步骤。
+# 一键启动 body_control —— 封装《前置 · 环境配置》(docs/environment_setup_zh-CN.md) 第 2 节的手动步骤。
 # 用法：在机器人 x86 上、以 ubuntu 用户执行  ./start_body_control.sh
 #   body_control 需要 root，脚本内部用 sudo 提权；跑在名为 body 的 tmux 会话里，SSH 断开也不退出。
 #

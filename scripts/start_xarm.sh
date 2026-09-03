@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# 一键启动 XARM 框架 + MoveIt 组件 —— 手臂 MoveIt 原子（atom05）的前置。
-# ⚠ real 模式已在天轶2.0真机跑通（atom05）；路径/包名以你机器人为准。
+# 一键启动 XARM 框架 + MoveIt 组件 —— 手臂 MoveIt 原子（motion04）的前置。
+# ⚠ real 模式已在天轶2.0真机跑通（motion04）；路径/包名以你机器人为准。
 #
 # 两种用法：
 #   1) 启动 XARM+MoveIt：      bash scripts/start_xarm.sh [real|sim]   （默认 real）
@@ -27,7 +27,7 @@ if [ "${BASH_SOURCE[0]}" != "${0}" ]; then
     if [ -f "$SETUP" ]; then
         source "$SETUP"
         echo "[OK] 已为当前终端 source: $SETUP"
-        echo "     现在可跑： python3 atom/demos/atom05_arm_moveit.py"
+        echo "     现在可跑： python3 atom/motion/motion04_arm_moveit.py"
     else
         echo "[错误] 找不到 $SETUP —— XARM 部署了吗？改脚本顶部 XARM_WS。"
     fi
@@ -85,7 +85,7 @@ tmux select-layout -t "$SESSION" even-horizontal
 
 echo "[提示] 验证就绪（另开终端先执行：source scripts/start_xarm.sh）:"
 echo "    ros2 control list_controllers          # 应含 moveit_*_arm_controller"
-echo "    ros2 action list | grep move_action    # MoveIt 起来了 → atom05 才连得上"
+echo "    ros2 action list | grep move_action    # MoveIt 起来了 → motion04 才连得上"
 [ "$MODE" = "real" ] && echo "    ros2 node list | grep /EAIHardware     # 真机通信节点，且日志无'看门狗超时'"
 echo "  跑 demo： 新终端先 source scripts/start_xarm.sh，再运行对应 atom/Skill"
 echo "  保持运行并退出界面： Ctrl+B 然后按 D"

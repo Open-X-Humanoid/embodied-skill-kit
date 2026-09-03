@@ -492,7 +492,7 @@ class GraspBottle(Node):
         if code == 1:
             return True
         self.get_logger().error(
-            f"MoveIt 失败 error_code={code}（99999 首查起点越界，见 atom05 guide 排错表）")
+            f"MoveIt 失败 error_code={code}（99999 首查起点越界，见 motion04 guide 排错表）")
         return False
 
     def _joint_goal(self, target_joints, tol=0.01):
@@ -538,7 +538,7 @@ class GraspBottle(Node):
         if code == 1:
             return True
         self.get_logger().error(
-            f"MoveIt 关节目标失败 error_code={code}（99999 首查起点越界，见 atom05 guide 排错表）")
+            f"MoveIt 关节目标失败 error_code={code}（99999 首查起点越界，见 motion04 guide 排错表）")
         return False
 
     # ── 抓握几何：瓶子位置 → (停驻点, 最终tcp目标, 瓶子实测位置) ──

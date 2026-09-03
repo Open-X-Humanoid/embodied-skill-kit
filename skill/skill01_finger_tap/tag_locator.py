@@ -15,7 +15,7 @@
   （头/腰转动照样对）。下游 finger_tap 只需一次 lookup_transform(base←head_roll_link)。
 
 跑在哪（Orin，nvidia 用户——相机同板图像不出板；pyapriltags 已随 move_box 装好）
-  1) 起相机： bash scripts/start_camera.sh          （atom25 同款）
+  1) 起相机： bash scripts/start_camera.sh          （perception01 同款）
   2) 本节点： python3 skill/skill01_finger_tap/tag_locator.py
 
 接口

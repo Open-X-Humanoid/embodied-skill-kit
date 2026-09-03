@@ -13,7 +13,7 @@
 | 配置常量（调参只改这里） | `skill/skill01_finger_tap/config.py` |
 | 演示视频 | 与配套代码同名，见 `skill/skill01_finger_tap/assets/videos/` |
 
-> 技能层主线是**裸 rclpy 直调 XARM**（`import rclpy` + 标准 msg，不 `import xarm_sdk`/`xrocs`）——透明、少依赖。手臂的四种控制模式（MoveIt/QP × 关节/末端）在原子层 atom05~08 已单独讲透，本文只讲**怎么把它们协调起来完成点按**，不重复展开单个控制器。建议先读《原6 · 手臂 MoveIt 末端》(`atom/docs/atom06_arm_moveit_endpose_guide_zh-CN.md`) 与《原8 · 手臂 QP 末端》(`atom/docs/atom08_arm_qp_endpose_guide_zh-CN.md`)。
+> 技能层主线是**裸 rclpy 直调 XARM**（`import rclpy` + 标准 msg，不 `import xarm_sdk`/`xrocs`）——透明、少依赖。手臂的四种控制模式（MoveIt/QP × 关节/末端）在原子层 motion04~08 已单独讲透，本文只讲**怎么把它们协调起来完成点按**，不重复展开单个控制器。建议先读《运控5 · 手臂 MoveIt 末端》(`atom/motion/docs/motion05_arm_moveit_endpose_guide_zh-CN.md`) 与《运控7 · 手臂 QP 末端》(`atom/motion/docs/motion07_arm_qp_endpose_guide_zh-CN.md`)。
 
 ## 1. 速览（点进来先看这块）
 
@@ -28,7 +28,7 @@ bash scripts/start_camera.sh                                  # 起 Orbbec 相�
 python3 skill/skill01_finger_tap/tag_locator.py   # 检测 tag、发目标点；不动机器人，零风险
 ```
 
-> ⚠ **相机话题名会自动探测，一般不用管**（细节见《前置 · 环境配置》第 4 节，`atom/docs/environment_setup_zh-CN.md`）：命名空间因机器而异，启动时扫 ROS 图自动认出、日志里会打印；多相机或想强制指定才 `export CAMERA_NS=<命名空间>`。但**相机若已由出厂服务自启，要跳过上面的 `start_camera.sh`**，否则会起第二个驱动抢 USB。
+> ⚠ **相机话题名会自动探测，一般不用管**（细节见《前置 · 环境配置》第 4 节，`docs/environment_setup_zh-CN.md`）：命名空间因机器而异，启动时扫 ROS 图自动认出、日志里会打印；多相机或想强制指定才 `export CAMERA_NS=<命名空间>`。但**相机若已由出厂服务自启，要跳过上面的 `start_camera.sh`**，否则会起第二个驱动抢 USB。
 
 `tag_locator.py` 只做「看」：检测卡片 → 算出中心 + 法线 → 持续发到话题 `/skill01/target_point`。它**不动机器人**，可以先单独跑、拿 `ros2 topic echo` 看数值是否合理。
 
@@ -57,14 +57,14 @@ python3 skill/skill01_finger_tap/finger_tap.py
 | 方向 | 名称 | 类型 | 作用 |
 |---|---|---|---|
 | 跨板话题 | `/skill01/target_point` | `geometry_msgs/PoseStamped`（frame=`head_roll_link`） | tag_locator 发、finger_tap 收：`position`=卡片中心，`orientation` 的 z 轴=卡面法线 |
-| 下发 | `/inspire_hand/ctrl/left_hand` | `sensor_msgs/JointState` | 摆点按手型（食指伸直、其余蜷起）；见《原3 · 灵巧手》 |
+| 下发 | `/inspire_hand/ctrl/left_hand` | `sensor_msgs/JointState` | 摆点按手型（食指伸直、其余蜷起）；见《运控9 · 灵巧手》 |
 | TF | `base ← head_roll_link` | tf2 | 把目标点/法线从相机标定系变换到 `base` 系 |
 | TF | `base ← left_tcp_link` | tf2 | 读手腕末端 tcp 当前位姿（起点、闭环实测） |
 | TF | `left_tcp_link ← left_index_2` | tf2（静态） | 指尖补偿：查 tcp→指尖的恒定偏移 |
 | 伸手（MoveIt 后端） | `/move_action` | `moveit_msgs/action/MoveGroup` | 一步规划到卡前（`ARM_BACKEND="moveit"`，默认） |
 | 伸手/微调/按下/退回 | `/endpose_single_arm_qp_L_controller/endPosSingleTarget` | `eai_manipulator_msgs/action/EndPosSingleTarget` | endpose QP 末端短程（微调/按下/退回恒用它；`ARM_BACKEND="qp"` 时伸手也用它） |
 | 回预备/归位 | `/jointspace_arm_L_controller/jointspace` | `eai_manipulator_msgs/action/JointSpace` | 关节空间大范围移动（回 READY、结束归位） |
-| Service | 使能 + `switch_controller` / `list_controllers` | — | 同 atom06/08 已验证套路（使能服务名自动探测） |
+| Service | 使能 + `switch_controller` / `list_controllers` | — | 同 motion05/08 已验证套路（使能服务名自动探测） |
 
 > ⚠ **`base` 不是 `base_link`**：天轶 2.0 URDF 里根是 `base_footprint`，经零偏移固定关节接 `base`，**没有 `base_link` 这个 frame**。写错直接 TF 超时退出。核实：`ros2 run tf2_ros tf2_echo base left_tcp_link`。
 
@@ -213,7 +213,7 @@ python3 skill/skill01_finger_tap/finger_tap.py
 | 垂直偏下 ~3cm（某些卡位） | 感知/瞄准残留，在 ±2~4cm 地板内。连跑 2~3 次方向一致再调 `AIM_BIAS_BASE` 的 z（如 -0.01→+0.02）；忽上忽下是噪声别调 |
 | ±2cm 随机散布 | 手腕姿态容差 × 指长，闭环只对齐骨架点、治不到，是地板，接受 |
 | 手不动 / 摆手型跳过 | `/inspire_hand/ctrl/left_hand` 无订阅者（手驱动 inspire_hand 没起）；`publish` 对零订阅者不报错、消息直接丢弃 |
-| 使能相关 / 规划成功但臂不动 / spawner 卡 | 与 atom05/06 同源（使能服务改名、teleop 占 `/arm/cmd_pos`、升级缺 pinocchio 库等），见《原5》排错表逐条对号 |
+| 使能相关 / 规划成功但臂不动 / spawner 卡 | 与 motion04/06 同源（使能服务改名、teleop 占 `/arm/cmd_pos`、升级缺 pinocchio 库等），见《原5》排错表逐条对号 |
 | TF 超时（`base ← ...`） | frame 名写错（是 `base` 不是 `base_link`），或 XARM/body 没起。`ros2 run tf2_ros tf2_echo base left_tcp_link` 核实 |
 | 查不到 tcp→指尖 TF，警告不补偿 | `TAP_LINK` 名字对吗？`ros2 run tf2_ros tf2_echo left_tcp_link left_index_2` 核实 |
 | 臂停在半空（段失败/Ctrl-C/崩溃） | `python3 .../finger_tap.py --recover` 按落盘出发位 QP 慢速原路退回、再关节归位（见第 6 节） |
