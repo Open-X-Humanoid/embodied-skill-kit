@@ -14,7 +14,9 @@ TAG_ID = 2                        # april_36h11-2
 TAG_SIZE = 0.04                   # 黑框外缘边长(m)，实测 4cm；填错则深度按比例错
 
 # ── 相机 ──
-IMAGE_TOPIC = "/camera/color/image_raw"      # ★待真机核实：ros2 topic list | grep camera
+# 话题命名空间【不写死】：节点启动时扫 ROS 图自动认出来（见 camera_ns.py）。
+# orbbec 驱动默认 `camera`，部分机器出厂配成 `ob_camera_head`，自动探测两者都认。
+# 想强制指定（多相机 / 跳过探测）： export CAMERA_NS=<命名空间>
 INTRINSICS_FILE = _HERE / "camera_intrinsics.json"
 EXPECTED_SIZE = (1280, 720)       # 内参标定时的分辨率(w,h)；实际流不同会自动等比缩放内参并告警
 

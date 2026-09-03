@@ -12,3 +12,6 @@ Thumbs.db
 # demo 运行产物（相机抓帧等），非仓库资产
 atom/assets/camera_captures/
 _last_start_pose.json
+
+# YOLO 预训练权重（ultralytics 首次运行自动下载，7MB 二进制，不进仓库）
+yolov8n-seg.pt

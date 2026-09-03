@@ -20,7 +20,17 @@
 
 跨两块板子（天轶2.0 双板：Orin 感知 / x86 运控），两板须在同一个 `ROS_DOMAIN_ID` 下才能互通话题。
 
-**① Orin（`nvidia` 用户）——起相机 + 两个感知节点：**
+**启动顺序不能颠倒**：两个感知节点输出的是 `base` 系坐标，靠 x86 本体提供的 TF 才算得出来，所以**先起 x86 本体，再起 Orin 感知**。
+
+**① x86（`ubuntu` 用户）——先起本体控制：**
+
+```bash
+sudo systemctl stop teleop_robot            # 遥控服务占 /arm/cmd_pos，不停则使能失败
+bash scripts/start_body_control.sh          # 另开终端，等 "All devices ready."
+bash scripts/start_xarm.sh real             # XARM 本体，等 ~20s
+```
+
+**② Orin（`nvidia` 用户）——起相机 + 两个感知节点：**
 
 ```bash
 bash scripts/start_camera.sh                                    # 起 Orbbec 相机驱动
@@ -28,14 +38,13 @@ python3 skill/skill02_bottle_grasp/bottle_locator.py             # 终端A：检
 python3 skill/skill02_bottle_grasp/box_locator.py                # 终端B：借瓶子种子高度测箱子
 ```
 
-两个节点都只做「看」，不动机器人，零风险，可以先单独跑、拿 `ros2 topic echo` 核对数值是否合理。`box_locator.py` 依赖 `bottle_locator.py` 已经在发布箱顶高度这个种子值，必须先起 `bottle_locator.py`。
+> ⚠ **相机话题名会自动探测，一般不用管**（细节见《前置 · 环境配置》第 4 节，`atom/docs/environment_setup_zh-CN.md`）：命名空间因机器而异，启动时扫 ROS 图自动认出、日志里会打印；多相机或想强制指定才 `export CAMERA_NS=<命名空间>`。但**相机若已由出厂服务自启，要跳过上面的 `start_camera.sh`**，否则会起第二个驱动抢 USB。
 
-**② x86（`ubuntu` 用户）——起本体控制 + 跑主程序：**
+两个感知节点都只做「看」，不发任何运动指令，可以先单独跑、拿 `ros2 topic echo` 核对数值是否合理。`box_locator.py` 依赖 `bottle_locator.py` 已经在发布箱顶高度这个种子值，必须先起 `bottle_locator.py`。
+
+**③ x86（`ubuntu` 用户）——跑主程序：**
 
 ```bash
-sudo systemctl stop teleop_robot            # 遥控服务占 /arm/cmd_pos，不停则使能失败
-bash scripts/start_body_control.sh          # 另开终端，等 "All devices ready."
-bash scripts/start_xarm.sh real             # XARM 本体
 source /home/ubuntu/XARM/install/setup.bash # 跑 demo 的终端 source 一次 XARM
 python3 skill/skill02_bottle_grasp/grasp_bottle.py
 ```

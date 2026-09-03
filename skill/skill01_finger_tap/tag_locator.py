@@ -19,14 +19,15 @@
   2) 本节点： python3 skill/skill01_finger_tap/tag_locator.py
 
 接口
-  Sub  IMAGE_TOPIC（见 config.py）  sensor_msgs/Image           相机彩色图（bgr8/rgb8 均可）
+  Sub  /<相机命名空间>/color/image_raw  sensor_msgs/Image       相机彩色图（bgr8/rgb8 均可）
+       命名空间启动时自动探测，见 camera_ns.py；CAMERA_NS 环境变量可强制指定
   Pub  /skill01/target_point     geometry_msgs/PoseStamped    tag 中心+卡面朝向，frame=head_roll_link
   TF   base ← head_roll_link        仅用于验收打印；查不到不影响发布
 
 阶段1验收（手持卡片前后左右挪，看 1Hz 打印）
   1) 三套坐标随卡片同向变化；2) 相机系 z ≈ 卡片到相机实测距离；3) base 系数值量级合理（误差<2cm）
 
-⚠ 待真机核实：IMAGE_TOPIC 名；分辨率与内参匹配（不匹配会自动缩放内参并告警，注意看日志）
+⚠ 待真机核实：分辨率与内参匹配（不匹配会自动缩放内参并告警，注意看日志）
 ⚠ 外参分组：EXTRINSICS_GROUP 默认头部回零组；demo 时头俯仰不同（如低头看桌面）须换组，否则偏 ~1°
 安全：本阶段纯感知，不发任何运动指令，零风险。
 """
@@ -42,6 +43,7 @@ from sensor_msgs.msg import Image
 from geometry_msgs.msg import PointStamped, PoseStamped
 
 import config as C
+import camera_ns
 import pose_math as PM
 
 # 此处在 rclpy.init 之前，无节点可用，只能用 print；两个库分开报，缺哪个一目了然
@@ -81,14 +83,16 @@ class TagLocator(Node):
 
         # ── ROS 接口（发完整位姿：position=中心，orientation 的 z 轴=卡面朝外法线）──
         self.pose_pub = self.create_publisher(PoseStamped, C.TARGET_TOPIC, 10)
-        self.image_sub_ = self.create_subscription(Image, C.IMAGE_TOPIC, self._on_image, 5)
+        ns = camera_ns.resolve(self)          # 相机命名空间：自动探测，CAMERA_NS 可覆盖
+        self.image_topic = f"/{ns}/color/image_raw"
+        self.image_sub_ = self.create_subscription(Image, self.image_topic, self._on_image, 5)
         if TF_OK:
             self.tf_buffer = Buffer()
             self.tf_listener = TransformListener(self.tf_buffer, self)
         self._last_print_ns = 0                             # 打印限频到 1Hz，发布不限
         self.get_logger().info(
             f"tag 定位启动 | 家族={C.TAG_FAMILY} id={C.TAG_ID} 边长={C.TAG_SIZE}m | "
-            f"订 {C.IMAGE_TOPIC} → 发 {C.TARGET_TOPIC}（frame={C.CALIB_PARENT_FRAME}）")
+            f"订 {self.image_topic} → 发 {C.TARGET_TOPIC}（frame={C.CALIB_PARENT_FRAME}）")
 
     # ── 标定文件加载 ─────────────────────────────────────────────
     def _load_intrinsics(self):

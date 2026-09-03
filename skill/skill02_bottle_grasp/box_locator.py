@@ -15,9 +15,13 @@ skill02_bottle_grasp · 阶段1b：借瓶子已测出的支撑面高度，反推
   反推"这种绕弯子的做法，直接对深度点云做"筛高度 + 求轮廓"这种纯古典几何就够了，不需要
   额外上开放集检测器识别"箱子/纸箱"这个类别。
 
-跑在哪（Orin，nvidia 用户；依赖 bottle_locator.py 同时在跑，借它发的箱顶高度当种子）
-  python3 skill/skill02_bottle_grasp/bottle_locator.py   # 另一个终端，先跑起来
-  python3 skill/skill02_bottle_grasp/box_locator.py
+跑在哪（相机与本节点在 Orin/nvidia；本体在 x86/ubuntu，两板须同 ROS_DOMAIN_ID）
+  依赖 bottle_locator.py 同时在跑，借它发的箱顶高度当种子
+  1) 起本体(x86)： bash scripts/start_body_control.sh  然后  bash scripts/start_xarm.sh real
+                   —— 本节点按 base 系「高度」筛点，靠本体提供的 TF，必须先起
+  2) 起相机(Orin)： bash scripts/start_camera.sh
+  3) python3 skill/skill02_bottle_grasp/bottle_locator.py   # 另一个终端，先跑起来
+  4) python3 skill/skill02_bottle_grasp/box_locator.py
 
 安全：本阶段纯感知，不发任何运动指令，零风险，可反复运行。
 
@@ -45,6 +49,7 @@ from sensor_msgs.msg import Image
 from geometry_msgs.msg import PoseStamped, Vector3, Quaternion
 
 import config as C
+import camera_ns
 import pose_math as PM
 
 try:
@@ -63,8 +68,10 @@ class BoxLocator(Node):
 
         self.depth = None            # 最新一帧深度（numpy, HxW, uint16, mm）
         self._bottle_xyz = None      # bottle_locator 给的种子：瓶子中心(base系, m)
+        ns = camera_ns.resolve(self)          # 相机命名空间：自动探测，CAMERA_NS 可覆盖
+        self.depth_topic = f"/{ns}/depth/image_raw"
         self.depth_sub_ = self.create_subscription(
-            Image, C.DEPTH_TOPIC, self._on_depth, qos_profile_sensor_data)
+            Image, self.depth_topic, self._on_depth, qos_profile_sensor_data)
         self.bottle_sub_ = self.create_subscription(
             PoseStamped, C.TARGET_TOPIC, self._on_bottle, 10)
 
@@ -76,7 +83,7 @@ class BoxLocator(Node):
         self._last_print_ns = 0
         self.timer = self.create_timer(C.BOX_INFER_PERIOD_S, self.step)
         self.get_logger().info(
-            f"box_locator 启动 | 订 {C.DEPTH_TOPIC} + {C.TARGET_TOPIC}（借箱顶高度当种子）"
+            f"box_locator 启动 | 订 {self.depth_topic} + {C.TARGET_TOPIC}（借箱顶高度当种子）"
             f" → 发 {C.BOX_TOPIC} + {C.BOX_SIZE_TOPIC}")
 
     # ── 标定文件加载 ───────────────────────────────────────────

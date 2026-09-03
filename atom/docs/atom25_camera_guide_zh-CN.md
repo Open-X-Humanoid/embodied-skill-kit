@@ -19,6 +19,8 @@
 ./scripts/start_camera.sh          # 启动 Orbbec 驱动；验证：ros2 topic list | grep camera
 ```
 
+> ⚠ **相机话题名会自动探测，一般不用管**（细节见《前置 · 环境配置》第 4 节，`atom/docs/environment_setup_zh-CN.md`）：命名空间因机器而异，启动时扫 ROS 图自动认出、日志里会打印；多相机或想强制指定才 `export CAMERA_NS=<命名空间>`。但**相机若已由出厂服务自启，要跳过上面的 `start_camera.sh`**，否则会起第二个驱动抢 USB。
+
 然后跑 demo（在 Orin 本地最省事；也可在 x86，只要同一 ROS 图、同 `ROS_DOMAIN_ID`）：
 
 ```bash

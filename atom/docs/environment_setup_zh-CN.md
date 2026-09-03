@@ -84,7 +84,35 @@ ros2 topic list | grep -E "/head|/arm|/waist|/leg"   # 应能看到各部位话�
 python3 -c "import bodyctrl_msgs"                     # 不报错 = 消息包可用
 ```
 
-## 4. 常见问题
+## 4. 相机话题名（感知类 demo / Skill 的前置）
+
+相机驱动发布的话题命名空间**因机器出厂配置而异**：orbbec 驱动默认是 `camera`，部分机器出厂配成了 `ob_camera_head`。代码里不写死任何一个，**启动时扫一遍 ROS 图自动认出来**——正常情况下你不需要做任何配置。
+
+启动日志会打印认到的结果，核对一眼即可：
+
+```text
+[INFO] [skill02_box_locator]: 相机命名空间 = ob_camera_head（自动探测）
+```
+
+想自己确认机器上有哪些相机话题：
+
+```bash
+ros2 topic list | grep -i color
+```
+
+**两种情况需要手动指定**——机器上有多颗相机（自动探测会选排序最靠前的那个并告警），或者想跳过探测：
+
+```bash
+export CAMERA_NS=ob_camera_head
+```
+
+设了这个变量就以它为准、不再探测；日志会显示「（环境变量 CAMERA_NS 指定，跳过探测）」。变量对 `atom25`、`skill01`、`skill02` 同时有效。
+
+⚠ **探测依赖相机驱动已经在跑**。驱动没起时扫不到任何彩色话题，程序会告警并按默认 `camera` 继续，随后表现为「收不到图像」超时。
+
+⚠ **先确认相机驱动是不是已经在跑**：部分机器出厂就自启了相机，此时再执行 `scripts/start_camera.sh` 会起第二个驱动抢 USB。上面那条 `ros2 topic list` 能看到彩色话题，就说明驱动已在运行，直接跳过启动脚本。
+
+## 5. 常见问题
 
 - **topic 列表为空**：body 没起来，或当前终端没 source 工作空间。
 - **`import bodyctrl_msgs` 报错**：没 source `/home/ubuntu/ros2ws/install/setup.bash`。

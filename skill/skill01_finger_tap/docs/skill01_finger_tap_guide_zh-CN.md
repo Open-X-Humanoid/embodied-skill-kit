@@ -28,6 +28,8 @@ bash scripts/start_camera.sh                                  # 起 Orbbec 相�
 python3 skill/skill01_finger_tap/tag_locator.py   # 检测 tag、发目标点；不动机器人，零风险
 ```
 
+> ⚠ **相机话题名会自动探测，一般不用管**（细节见《前置 · 环境配置》第 4 节，`atom/docs/environment_setup_zh-CN.md`）：命名空间因机器而异，启动时扫 ROS 图自动认出、日志里会打印；多相机或想强制指定才 `export CAMERA_NS=<命名空间>`。但**相机若已由出厂服务自启，要跳过上面的 `start_camera.sh`**，否则会起第二个驱动抢 USB。
+
 `tag_locator.py` 只做「看」：检测卡片 → 算出中心 + 法线 → 持续发到话题 `/skill01/target_point`。它**不动机器人**，可以先单独跑、拿 `ros2 topic echo` 看数值是否合理。
 
 **② x86（`ubuntu` 用户）——起本体控制 + 跑主程序：**

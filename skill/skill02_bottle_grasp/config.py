@@ -12,8 +12,10 @@ _HERE = Path(__file__).resolve().parent
 _SKILL01 = _HERE.parent / "skill01_finger_tap"   # 同一颗相机，复用已标定好的内外参文件
 
 # ── 相机 ──
-RGB_TOPIC = "/ob_camera_head/color/image_raw"
-DEPTH_TOPIC = "/ob_camera_head/depth/image_raw"    # 16UC1, 单位mm
+# 话题命名空间【不写死】：节点启动时扫 ROS 图自动认出来（见 camera_ns.py）。
+# orbbec 驱动默认 `camera`，部分机器出厂配成 `ob_camera_head`，自动探测两者都认。
+# 想强制指定（多相机 / 跳过探测）： export CAMERA_NS=<命名空间>
+# 深度图 16UC1、单位 mm。
 # RGB 与深度像素坐标直接对应，无需额外配准；若更换相机型号/话题需重新确认这条假设。
 
 # ── 内参（复用已标定文件）──

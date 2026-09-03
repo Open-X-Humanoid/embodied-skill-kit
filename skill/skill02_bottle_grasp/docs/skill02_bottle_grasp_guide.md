@@ -19,13 +19,25 @@ Bottle Grasp combines two perception nodes on the Orin with one motion node on t
 
 Both boards must use the same `ROS_DOMAIN_ID`.
 
-On the Orin, run the camera and the two perception nodes in separate terminals:
+**Start the x86 side first.** The two perception nodes publish coordinates in the `base` frame, which is computed from the TF provided by the robot body services.
+
+On the x86, start the robot services:
+
+```bash
+sudo systemctl stop teleop_robot
+bash scripts/start_body_control.sh
+bash scripts/start_xarm.sh real
+```
+
+Then, on the Orin, run the camera and the two perception nodes in separate terminals:
 
 ```bash
 bash scripts/start_camera.sh
 python3 skill/skill02_bottle_grasp/bottle_locator.py
 python3 skill/skill02_bottle_grasp/box_locator.py
 ```
+
+> ⚠ **The camera topic namespace is detected automatically; normally you need do nothing** (details in section 4 of the Prerequisite · Environment Setup guide, `atom/docs/environment_setup.md`). It varies by robot, is detected from the ROS graph at startup, and is printed in the log; use `export CAMERA_NS=<namespace>` only for multi-camera robots or to force a specific one. However, **if the driver already starts automatically at boot, skip `start_camera.sh` above** or a second driver will fight for the USB device.
 
 Inspect the perception output before enabling arm motion:
 
@@ -35,12 +47,9 @@ ros2 topic echo /skill02/box_pose
 ros2 topic echo /skill02/box_size
 ```
 
-On the x86, start the robot services and run the motion node:
+Back on the x86, run the motion node:
 
 ```bash
-sudo systemctl stop teleop_robot
-bash scripts/start_body_control.sh
-bash scripts/start_xarm.sh real
 source /home/ubuntu/XARM/install/setup.bash
 python3 skill/skill02_bottle_grasp/grasp_bottle.py
 ```

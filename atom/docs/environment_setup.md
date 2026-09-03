@@ -84,7 +84,35 @@ ros2 topic list | grep -E "/head|/arm|/waist|/leg"   # you should see each part'
 python3 -c "import bodyctrl_msgs"                     # no error = the message package is available
 ```
 
-## 4. FAQ
+## 4. Camera Topic Namespace (prerequisite for perception demos / Skills)
+
+The camera driver's topic namespace **varies by factory configuration**: the orbbec driver defaults to `camera`, while some robots ship configured as `ob_camera_head`. The code hard-codes neither. It **scans the ROS graph at startup and detects the namespace automatically**, so normally you need to configure nothing.
+
+The startup log prints what it found:
+
+```text
+[INFO] [skill02_box_locator]: 相机命名空间 = ob_camera_head（自动探测）
+```
+
+To list the camera topics yourself:
+
+```bash
+ros2 topic list | grep -i color
+```
+
+**Two cases need a manual override** — the robot has more than one camera (detection picks the first in sort order and warns), or you want to skip detection entirely:
+
+```bash
+export CAMERA_NS=ob_camera_head
+```
+
+When this variable is set it wins and no detection runs. The variable applies to `atom25`, `skill01`, and `skill02` alike.
+
+⚠ **Detection requires the camera driver to be running already.** With no driver up, no color topic is found; the node warns, falls back to `camera`, and then times out waiting for images.
+
+⚠ **Check whether the camera driver is already running first**: some robots start it automatically at boot, in which case running `scripts/start_camera.sh` launches a second driver that fights for the USB device. If the `ros2 topic list` command above shows color topics, the driver is already up — skip the start script.
+
+## 5. FAQ
 
 - **Empty topic list**: body isn't up, or the current terminal didn't source the workspace.
 - **`import bodyctrl_msgs` fails**: didn't source `/home/ubuntu/ros2ws/install/setup.bash`.

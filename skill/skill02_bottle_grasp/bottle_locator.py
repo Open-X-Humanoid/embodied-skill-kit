@@ -23,10 +23,12 @@ skill02_bottle_grasp · 阶段1：YOLO(分割) 检测瓶子 + 瓶底边界曲线
   【支撑面】（桌子/箱子，这类表面深度一直很干净）的深度，反推瓶子边界弧上每个点的
   3D 位置，不测瓶身本体。
 
-跑在哪（Orin，nvidia 用户）
+跑在哪（相机与本节点在 Orin/nvidia；本体在 x86/ubuntu，两板须同 ROS_DOMAIN_ID）
   0) 环境：pip install ultralytics opencv-python
-  1) 起相机： bash scripts/start_camera.sh
-  2) 本节点： python3 skill/skill02_bottle_grasp/bottle_locator.py
+  1) 起本体(x86)： bash scripts/start_body_control.sh  然后  bash scripts/start_xarm.sh real
+                   —— 本节点输出 base 系坐标，靠本体提供的 TF 算出来，必须先起
+  2) 起相机(Orin)： bash scripts/start_camera.sh
+  3) 本节点(Orin)： python3 skill/skill02_bottle_grasp/bottle_locator.py
 
 安全：本阶段纯感知，不发任何运动指令，零风险，可反复运行。
 
@@ -53,6 +55,7 @@ from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Float32
 
 import config as C
+import camera_ns
 import pose_math as PM
 
 try:
@@ -108,10 +111,13 @@ class BottleLocator(Node):
 
         self.rgb = None          # 最新一帧 RGB（numpy, HxWx3, bgr）
         self.depth = None        # 最新一帧深度（numpy, HxW, uint16, mm）
+        ns = camera_ns.resolve(self)          # 相机命名空间：自动探测，CAMERA_NS 可覆盖
+        self.rgb_topic = f"/{ns}/color/image_raw"
+        self.depth_topic = f"/{ns}/depth/image_raw"
         self.rgb_sub_ = self.create_subscription(
-            Image, C.RGB_TOPIC, self._on_rgb, qos_profile_sensor_data)
+            Image, self.rgb_topic, self._on_rgb, qos_profile_sensor_data)
         self.depth_sub_ = self.create_subscription(
-            Image, C.DEPTH_TOPIC, self._on_depth, qos_profile_sensor_data)
+            Image, self.depth_topic, self._on_depth, qos_profile_sensor_data)
 
         self.pose_pub = self.create_publisher(PoseStamped, C.TARGET_TOPIC, 10)
         self.diam_pub = self.create_publisher(Float32, C.DIAMETER_TOPIC, 10)
@@ -122,7 +128,7 @@ class BottleLocator(Node):
         self.timer = self.create_timer(C.INFER_PERIOD_S, self.step)   # 推理频率与图像帧率解耦
         self.get_logger().info(
             f"bottle_locator 启动 | 类别={C.TARGET_CLASS_NAME}(id={self.bottle_cls_id}) "
-            f"conf>={C.CONF_THRES} | 订 {C.RGB_TOPIC} + {C.DEPTH_TOPIC} → 发 {C.TARGET_TOPIC}"
+            f"conf>={C.CONF_THRES} | 订 {self.rgb_topic} + {self.depth_topic} → 发 {C.TARGET_TOPIC}"
             f"（frame={C.BASE_FRAME}）")
 
     # ── 标定文件加载 ───────────────────────────────────────────

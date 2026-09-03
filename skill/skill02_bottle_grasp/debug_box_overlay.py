@@ -36,6 +36,7 @@ from sensor_msgs.msg import Image
 from geometry_msgs.msg import PoseStamped
 
 import config as C
+import camera_ns
 import pose_math as PM
 
 try:
@@ -58,10 +59,11 @@ class BoxOverlayDebug(Node):
         self.rgb = None
         self.depth = None
         self._bottle_xyz = None
+        ns = camera_ns.resolve(self)          # 相机命名空间：自动探测，CAMERA_NS 可覆盖
         self.rgb_sub_ = self.create_subscription(
-            Image, C.RGB_TOPIC, self._on_rgb, qos_profile_sensor_data)
+            Image, f"/{ns}/color/image_raw", self._on_rgb, qos_profile_sensor_data)
         self.depth_sub_ = self.create_subscription(
-            Image, C.DEPTH_TOPIC, self._on_depth, qos_profile_sensor_data)
+            Image, f"/{ns}/depth/image_raw", self._on_depth, qos_profile_sensor_data)
         self.bottle_sub_ = self.create_subscription(
             PoseStamped, C.TARGET_TOPIC, self._on_bottle, 10)
         self.tf_buffer = Buffer()
